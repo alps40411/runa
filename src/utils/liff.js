@@ -1,0 +1,1 @@
+// LIFF integration removed - file kept for documentation purposes
