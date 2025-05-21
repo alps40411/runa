@@ -132,70 +132,65 @@ const AnalysisPage = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    const controller = new AbortController();
+    const signal = controller.signal;
+
     const fetchAnalysis = async () => {
       try {
         const response = await fetch('https://ffsystem.ngrok.io/card/api/gacha/explanation/?ai_token=hIkm8WQ4Vv&cdr_pk=850&stream=true', {
+          method: 'GET',
           headers: {
             'Accept': 'text/event-stream',
-            'Cache-Control': 'no-cache'
-          }
+            'Cache-Control': 'no-cache',
+            'Connection': 'keep-alive'
+          },
+          signal
         });
 
         if (!response.ok) {
           throw new Error(`伺服器回應錯誤 (${response.status})`);
         }
 
-        const reader = response.body?.getReader();
-        if (!reader) {
-          throw new Error('無法讀取回應內容');
-        }
-
+        const reader = response.body.getReader();
         const decoder = new TextDecoder('utf-8');
-        let buffer = '';
 
         while (true) {
           const { value, done } = await reader.read();
           if (done) break;
 
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split('\n');
-          buffer = lines.pop() || '';
+          const chunk = decoder.decode(value);
+          const lines = chunk.split('\n');
 
           for (const line of lines) {
-            const trimmedLine = line.trim();
-            if (!trimmedLine || !trimmedLine.startsWith('data:')) continue;
-
-            const jsonStr = trimmedLine.replace(/^data:\s*/, '');
-
-            if (jsonStr === '[DONE]') {
+            if (line.trim() === '') continue;
+            if (line.includes('[DONE]')) {
               setIsLoading(false);
               return;
             }
 
-            try {
-              const parsed = JSON.parse(jsonStr);
-              const content = parsed.choices?.[0]?.delta?.content;
-              if (content) {
-                setAnalysis(prev => prev + content);
+            if (line.startsWith('data:')) {
+              const jsonStr = line.replace(/^data:\s*/, '').trim();
+              try {
+                const parsed = JSON.parse(jsonStr);
+                const content = parsed.choices?.[0]?.delta?.content;
+                if (content) {
+                  setAnalysis(prev => prev + content);
+                }
+              } catch (e) {
+                console.warn('JSON parsing warning:', e);
               }
-            } catch (e) {
-              console.error('JSON 解析錯誤:', e);
             }
           }
         }
 
         setIsLoading(false);
       } catch (error) {
-        console.error('解析擷取錯誤:', error);
-        let errorMessage = '無法取得解析，請稍後再試。';
-        
-        if (!navigator.onLine) {
-          errorMessage = '請檢查網路連線是否正常。';
-        } else if (error.message.includes('伺服器回應錯誤')) {
-          errorMessage = error.message;
+        if (error.name === 'AbortError') {
+          return;
         }
         
-        setError(errorMessage);
+        console.error('解析擷取錯誤:', error);
+        setError('無法取得解析，請稍後再試。');
         setIsLoading(false);
       }
     };
@@ -203,8 +198,7 @@ const AnalysisPage = () => {
     fetchAnalysis();
 
     return () => {
-      setAnalysis('');
-      setError(null);
+      controller.abort();
     };
   }, []);
 
