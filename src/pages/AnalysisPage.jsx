@@ -137,7 +137,7 @@ const AnalysisPage = () => {
 
     const fetchAnalysis = async () => {
       try {
-        const response = await fetch('https://ffsystem.ngrok.io/card/api/gacha/explanation/?ai_token=hIkm8WQ4Vv&cdr_pk=850&stream=true', {
+        const response = await fetch('/api/card/api/gacha/explanation/?ai_token=hIkm8WQ4Vv&cdr_pk=850&stream=true', {
           method: 'GET',
           headers: {
             'Accept': 'text/event-stream',
