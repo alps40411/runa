@@ -132,7 +132,7 @@ const AnalysisPage = () => {
       let buffer = '';
 
       while (true) {
-        const { value, done } = await reader!.read();
+        const { value, done } = await reader.read();
         if (done) break;
 
         buffer += decoder.decode(value, { stream: true });
