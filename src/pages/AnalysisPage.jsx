@@ -93,6 +93,14 @@ const LoadingText = styled(motion.div)`
   font-size: 0.9rem;
 `;
 
+const ErrorText = styled(motion.div)`
+  color: #ff6b6b;
+  font-size: 0.9rem;
+  max-width: 300px;
+  text-align: center;
+  margin-top: var(--spacing-md);
+`;
+
 const BackgroundSymbols = styled.div`
   position: absolute;
   top: 0;
@@ -121,64 +129,92 @@ const AnalysisPage = () => {
   const navigate = useNavigate();
   const [analysis, setAnalysis] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-  const fetchAnalysis = async () => {
-    try {
-      const response = await fetch('https://ffsystem.ngrok.io/card/api/gacha/explanation/?ai_token=hIkm8WQ4Vv&cdr_pk=850&stream=true');
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder('utf-8');
+    const fetchAnalysis = async () => {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 seconds timeout
 
-      let buffer = '';
-
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
-
-        buffer += decoder.decode(value, { stream: true });
-
-        // 將 chunk 切成一行一行
-        const lines = buffer.split('\n');
-
-        // 把最後一行保留（可能是不完整的）
-        buffer = lines.pop() || '';
-
-        for (const line of lines) {
-          const trimmedLine = line.trim();
-          if (!trimmedLine || !trimmedLine.startsWith('data:')) continue;
-
-          const jsonStr = trimmedLine.replace(/^data:\s*/, '');
-
-          if (jsonStr === '[DONE]') {
-            setIsLoading(false);
-            return;
+      try {
+        const response = await fetch('https://ffsystem.ngrok.io/card/api/gacha/explanation/?ai_token=hIkm8WQ4Vv&cdr_pk=850&stream=true', {
+          signal: controller.signal,
+          headers: {
+            'Accept': 'text/event-stream',
+            'Cache-Control': 'no-cache',
           }
+        });
 
-          try {
-            const parsed = JSON.parse(jsonStr);
-            const content = parsed.choices?.[0]?.delta?.content;
-            if (content) {
-              setAnalysis(prev => prev + content);
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          throw new Error(`伺服器回應錯誤 (${response.status})`);
+        }
+
+        const reader = response.body?.getReader();
+        if (!reader) {
+          throw new Error('無法讀取回應內容');
+        }
+
+        const decoder = new TextDecoder('utf-8');
+        let buffer = '';
+
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+
+          for (const line of lines) {
+            const trimmedLine = line.trim();
+            if (!trimmedLine || !trimmedLine.startsWith('data:')) continue;
+
+            const jsonStr = trimmedLine.replace(/^data:\s*/, '');
+
+            if (jsonStr === '[DONE]') {
+              setIsLoading(false);
+              return;
             }
-          } catch (e) {
-            console.error('JSON parse error:', e);
+
+            try {
+              const parsed = JSON.parse(jsonStr);
+              const content = parsed.choices?.[0]?.delta?.content;
+              if (content) {
+                setAnalysis(prev => prev + content);
+              }
+            } catch (e) {
+              console.error('JSON 解析錯誤:', e);
+            }
           }
         }
-      }
 
-      setIsLoading(false);
-    } catch (error) {
-      console.error('Error fetching analysis:', error);
-      // fallback（可省略）
-      setTimeout(() => {
-        setAnalysis('無法取得解析，請稍後再試。');
         setIsLoading(false);
-      }, 2000);
-    }
-  };
+      } catch (error) {
+        console.error('解析擷取錯誤:', error);
+        let errorMessage = '無法取得解析，請稍後再試。';
+        
+        if (error.name === 'AbortError') {
+          errorMessage = '連線逾時，請確認網路狀態後重試。';
+        } else if (!navigator.onLine) {
+          errorMessage = '請檢查網路連線是否正常。';
+        } else if (error.message.includes('伺服器回應錯誤')) {
+          errorMessage = error.message;
+        }
+        
+        setError(errorMessage);
+        setIsLoading(false);
+      }
+    };
 
-  fetchAnalysis();
-}, []);
+    fetchAnalysis();
+
+    return () => {
+      setAnalysis('');
+      setError(null);
+    };
+  }, []);
 
   return (
     <PageContainer
@@ -234,6 +270,32 @@ const AnalysisPage = () => {
             解讀神諭中...
           </LoadingText>
         </LoadingContainer>
+      ) : error ? (
+        <>
+          <ErrorText
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+          >
+            {error}
+          </ErrorText>
+          <motion.button
+            onClick={() => window.location.reload()}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            style={{
+              marginTop: 'var(--spacing-lg)',
+              padding: 'var(--spacing-sm) var(--spacing-md)',
+              border: '1px solid var(--color-text-secondary)',
+              borderRadius: '4px',
+              background: 'transparent',
+              color: 'var(--color-text-secondary)',
+              cursor: 'pointer'
+            }}
+          >
+            重試
+          </motion.button>
+        </>
       ) : (
         <AnalysisContainer
           initial={{ opacity: 0, y: 20 }}
