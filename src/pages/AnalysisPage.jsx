@@ -137,17 +137,15 @@ const AnalysisPage = () => {
       const timeoutId = setTimeout(() => controller.abort(), 30000);
 
       try {
-        const response = await fetch('https://ffsystem.ngrok.io/card/api/gacha/explanation/?ai_token=hIkm8WQ4Vv&cdr_pk=850&stream=true', {
+        const originalUrl = 'https://ffsystem.ngrok.io/card/api/gacha/explanation/?ai_token=hIkm8WQ4Vv&cdr_pk=850&stream=true';
+        const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(originalUrl);
+
+        const response = await fetch(proxyUrl, {
           signal: controller.signal,
           headers: {
             'Accept': 'text/event-stream',
-            'Cache-Control': 'no-cache',
-            'Origin': window.location.origin,
-            'Access-Control-Request-Method': 'GET',
-            'Access-Control-Request-Headers': 'Content-Type'
-          },
-          mode: 'cors',
-          credentials: 'include'
+            'Cache-Control': 'no-cache'
+          }
         });
 
         clearTimeout(timeoutId);
