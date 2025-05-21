@@ -81,6 +81,14 @@ const AnalysisText = styled.p`
   white-space: pre-wrap;
 `;
 
+const ErrorText = styled(motion.div)`
+  color: #ff6b6b;
+  font-size: 0.9rem;
+  max-width: 300px;
+  text-align: center;
+  margin-top: var(--spacing-md);
+`;
+
 const LoadingContainer = styled.div`
   display: flex;
   flex-direction: column;
@@ -91,14 +99,6 @@ const LoadingContainer = styled.div`
 const LoadingText = styled(motion.div)`
   color: var(--color-text-secondary);
   font-size: 0.9rem;
-`;
-
-const ErrorText = styled(motion.div)`
-  color: #ff6b6b;
-  font-size: 0.9rem;
-  max-width: 300px;
-  text-align: center;
-  margin-top: var(--spacing-md);
 `;
 
 const BackgroundSymbols = styled.div`
@@ -133,22 +133,13 @@ const AnalysisPage = () => {
 
   useEffect(() => {
     const fetchAnalysis = async () => {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000);
-
       try {
-        const originalUrl = 'https://ffsystem.ngrok.io/card/api/gacha/explanation/?ai_token=hIkm8WQ4Vv&cdr_pk=850&stream=true';
-        const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(originalUrl);
-
-        const response = await fetch(proxyUrl, {
-          signal: controller.signal,
+        const response = await fetch('https://ffsystem.ngrok.io/card/api/gacha/explanation/?ai_token=hIkm8WQ4Vv&cdr_pk=850&stream=true', {
           headers: {
             'Accept': 'text/event-stream',
             'Cache-Control': 'no-cache'
           }
         });
-
-        clearTimeout(timeoutId);
 
         if (!response.ok) {
           throw new Error(`伺服器回應錯誤 (${response.status})`);
@@ -198,9 +189,7 @@ const AnalysisPage = () => {
         console.error('解析擷取錯誤:', error);
         let errorMessage = '無法取得解析，請稍後再試。';
         
-        if (error.name === 'AbortError') {
-          errorMessage = '連線逾時，請確認網路狀態後重試。';
-        } else if (!navigator.onLine) {
+        if (!navigator.onLine) {
           errorMessage = '請檢查網路連線是否正常。';
         } else if (error.message.includes('伺服器回應錯誤')) {
           errorMessage = error.message;
