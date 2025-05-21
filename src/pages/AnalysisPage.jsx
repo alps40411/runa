@@ -2,9 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
-import { useAppContext } from '../context/AppContext';
 import TriangleSymbol from '../components/symbols/TriangleSymbol';
-import CircleSymbol from '../components/symbols/CircleSymbol';
 
 const PageContainer = styled(motion.div)`
   display: flex;
@@ -16,6 +14,13 @@ const PageContainer = styled(motion.div)`
   text-align: center;
   position: relative;
   overflow: hidden;
+  width: 100%;
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+  padding: 40px 20px;
+  box-sizing: border-box;
+  background-color: #f8f8f5;
 `;
 
 const BackButton = styled(motion.button)`
@@ -101,28 +106,21 @@ const LoadingText = styled(motion.div)`
   font-size: 0.9rem;
 `;
 
-const BackgroundSymbols = styled.div`
-  position: absolute;
-  top: 0;
-  left: 0;
+const ImagesContainer = styled.div`
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  margin-top: 10px;
   width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: -1;
 `;
 
-const TopLeftSymbol = styled.div`
-  position: absolute;
-  top: 100px;
-  left: 20px;
-  opacity: 0.4;
-`;
-
-const BottomRightSymbol = styled.div`
-  position: absolute;
-  bottom: 100px;
-  right: 30px;
-  opacity: 0.4;
+const ImageItem = styled.img`
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  border-radius: 8px;
 `;
 
 const AnalysisPage = () => {
@@ -166,15 +164,6 @@ const AnalysisPage = () => {
       exit={{ opacity: 0 }}
       transition={{ duration: 0.6 }}
     >
-      <BackgroundSymbols>
-        <TopLeftSymbol>
-          <CircleSymbol size={40} animate={false} />
-        </TopLeftSymbol>
-        <BottomRightSymbol>
-          <CircleSymbol size={36} animate={false} />
-        </BottomRightSymbol>
-      </BackgroundSymbols>
-
       <BackButton
         onClick={() => navigate('/reading')}
         whileHover={{ x: -3 }}
@@ -240,13 +229,20 @@ const AnalysisPage = () => {
           </motion.button>
         </>
       ) : (
-        <AnalysisContainer
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.4 }}
-        >
-          <AnalysisText dangerouslySetInnerHTML={{ __html: analysis }} />
-        </AnalysisContainer>
+        <>
+          <AnalysisContainer
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+          >
+            <AnalysisText dangerouslySetInnerHTML={{ __html: analysis }} />
+          </AnalysisContainer>
+          <ImagesContainer>
+            <ImageItem src="/images/tutor.png" alt="Tutor" />
+            <ImageItem src="/images/activity.png" alt="Activity" />
+            <ImageItem src="/images/aiya.png" alt="AIYA" />
+          </ImagesContainer>
+        </>
       )}
     </PageContainer>
   );

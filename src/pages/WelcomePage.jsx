@@ -3,9 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import styled from 'styled-components'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAppContext } from '../context/AppContext'
-import TriangleSymbol from '../components/symbols/TriangleSymbol'
 import CircleSymbol from '../components/symbols/CircleSymbol'
-import EyeSymbol from '../components/symbols/EyeSymbol'
 
 const PageContainer = styled(motion.div)`
   display: flex;
@@ -13,14 +11,26 @@ const PageContainer = styled(motion.div)`
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  padding: var(--spacing-xl) var(--spacing-md);
   text-align: center;
   position: relative;
   overflow: hidden;
+  width: 100%;
+  background-image: url('/images/intro_bg.jpg');
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+  padding: 40px 20px;
+  box-sizing: border-box;
+  background-color: #f8f8f5;
 `
 
 const LogoContainer = styled(motion.div)`
   margin-bottom: var(--spacing-xl);
+`
+
+const LogoImage = styled.img`
+  width: 50%;
+  height: auto;
 `
 
 const Title = styled(motion.h1)`
@@ -29,32 +39,36 @@ const Title = styled(motion.h1)`
   line-height: 1.6;
   margin-bottom: var(--spacing-lg);
   letter-spacing: 1px;
+  color: #5b5c5b;
 `
 
 const Description = styled(motion.p)`
-  font-weight: var(--font-weight-light);
+  font-weight: var(--font-weight-medium);
   font-size: 0.9rem;
   line-height: 1.8;
   margin-bottom: var(--spacing-xl);
   max-width: 280px;
   letter-spacing: 0.5px;
+  color: #606160;
 `
 
 const SectionTitle = styled(motion.h2)`
   font-weight: var(--font-weight-regular);
   font-size: 1rem;
-  margin-bottom: var(--spacing-lg);
-  letter-spacing: 1px;
+  letter-spacing: 10px;
+  color: #b3a392;
+  font-weight: 700;
 `
 
 const InputContainer = styled(motion.div)`
-  width: 100%;
-  max-width: 320px;
+  width: 120%;
   margin-bottom: var(--spacing-lg);
+  margin-top: 5px;
 `
 
 const StyledInput = styled.input`
   width: 100%;
+  height: 30px;
   padding: var(--spacing-md);
   border: 1px solid var(--color-text-secondary);
   background-color: transparent;
@@ -62,11 +76,11 @@ const StyledInput = styled.input`
   font-size: 0.9rem;
   font-weight: var(--font-weight-light);
   text-align: center;
-  color: var(--color-text-primary);
   
   &::placeholder {
-    color: var(--color-text-secondary);
-    opacity: 0.7;
+    color: #929292;
+    font-weight: 500;
+    font-size: 12px;
   }
   
   &:focus {
@@ -85,6 +99,10 @@ const SubmitButton = styled(motion.button)`
   font-weight: var(--font-weight-regular);
   cursor: pointer;
   transition: background-color var(--transition-fast);
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   
   &:hover {
     background-color: var(--color-accent-dark);
@@ -119,23 +137,6 @@ const BottomLeftSymbol = styled.div`
   opacity: 0.6;
 `
 
-const CenterEyeSymbol = styled.div`
-  position: absolute;
-  bottom: 30px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  
-  span {
-    font-size: 0.8rem;
-    margin-top: var(--spacing-sm);
-    color: var(--color-text-secondary);
-    letter-spacing: 1px;
-  }
-`
-
 const WelcomePage = () => {
   const navigate = useNavigate()
   const { userQuestion, setUserQuestion } = useAppContext()
@@ -144,7 +145,12 @@ const WelcomePage = () => {
   
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!userQuestion.trim()) return
+    
+    // Check if userQuestion is empty or only contains whitespace
+    if (!userQuestion.trim()) {
+      alert('請輸入心中的問題')
+      return
+    }
     
     setIsSubmitting(true)
     
@@ -175,7 +181,7 @@ const WelcomePage = () => {
         animate={{ scale: 1, opacity: 1 }}
         transition={{ duration: 0.8, delay: 0.2 }}
       >
-        <TriangleSymbol size={80} />
+        <LogoImage src="/images/intro_icon.png" alt="Logo" />
       </LogoContainer>
       
       <Title
@@ -183,7 +189,7 @@ const WelcomePage = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.4 }}
       >
-        北歐神話靈神之父<br/>奧丁的祝福符文
+        北歐神話眾神之父<br/>奧丁的祝福符文
       </Title>
       
       <Description
@@ -192,10 +198,10 @@ const WelcomePage = () => {
         transition={{ duration: 0.6, delay: 0.6 }}
       >
         為我們帶來洞見，讓我們看見真實。<br/>
-        用心聆聽源自的訊息。<br/>
+        用心聆聽盧恩的訊息。<br/>
         透過符文的智慧，<br/>
-        建議將如其所是的呈現。<br/>
-        讓直覺符文為我們燃起心中的光，<br/>
+        建議將如其所是的呈現～<br/><br/>
+        讓盧恩符文為我們燃起心中的光，<br/>
         點亮未來之路。
       </Description>
       
@@ -207,7 +213,14 @@ const WelcomePage = () => {
         解惑之路
       </SectionTitle>
       
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit}
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}
+      >
         <InputContainer
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -216,7 +229,7 @@ const WelcomePage = () => {
         >
           <StyledInput
             type="text"
-            placeholder="請輸入您的問題"
+            placeholder="請輸入心中的問題"
             value={userQuestion}
             onChange={(e) => setUserQuestion(e.target.value)}
             onFocus={() => setIsInputFocused(true)}
@@ -225,25 +238,18 @@ const WelcomePage = () => {
         </InputContainer>
         
         <AnimatePresence>
-          {userQuestion.trim() && (
-            <SubmitButton
-              type="submit"
-              disabled={isSubmitting}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 10 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              {isSubmitting ? '尋求中...' : '確認'}
-            </SubmitButton>
-          )}
+          <SubmitButton
+            type="submit"
+            disabled={isSubmitting}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 10 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            {isSubmitting ? '尋求中...' : '提交'}
+          </SubmitButton>
         </AnimatePresence>
       </form>
-      
-      <CenterEyeSymbol>
-        <EyeSymbol size={30} />
-        <span>靈感之眼</span>
-      </CenterEyeSymbol>
     </PageContainer>
   )
 }

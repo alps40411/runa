@@ -12,12 +12,21 @@ const PageContainer = styled(motion.div)`
   background-color: var(--color-background);
   padding: var(--spacing-xl) var(--spacing-md);
   position: relative;
+  width: 100%;
+  background-image: url('/images/stone_bg.jpg');
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+  padding: 40px 20px;
+  box-sizing: border-box;
+  background-color: #f8f8f5;
 `;
 
 const CardsContainer = styled.div`
   display: flex;
   flex-direction: column;
   gap: var(--spacing-md);
+  margin-top: 80px;
   margin-bottom: var(--spacing-xl);
   width: 100%;
   max-width: 340px;
@@ -56,6 +65,13 @@ const CardDescription = styled.p`
   font-size: 0.9rem;
   color: var(--color-text-secondary);
   line-height: 1.4;
+`;
+
+const Question = styled.div`
+  font-size: 1.1rem;
+  color: #606160;
+  margin-bottom: var(--spacing-xl);
+  font-weight: var(--font-weight-medium);
 `;
 
 const ActionButton = styled(motion.button)`
@@ -115,38 +131,31 @@ const ReadingPage = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const staticData = {
-      "card": [
-        {
-          "description": "帶來好運，增加時薪，度過難關，靈性突破，帶來創意",
-          "name": "KENAZ",
-          "image": "https://react-fflinebot.s3.amazonaws.com/img/Rune/17-4.jpg",
-          "main_title": "KENAZ",
-          "sub_title": ""
-        },
-        {
-          "description": "增強投資直覺，增強預知能力",
-          "name": "ALGIZ",
-          "image": "https://react-fflinebot.s3.amazonaws.com/img/Rune/23-1.jpg",
-          "main_title": "ALGIZ",
-          "sub_title": ""
-        },
-        {
-          "description": "增強靈性成長，強化個人力量",
-          "name": "JERA",
-          "image": "https://react-fflinebot.s3.amazonaws.com/img/Rune/25-1.jpg",
-          "main_title": "JERA",
-          "sub_title": ""
+    const fetchResult = async () => {
+      try {
+        const response = await fetch('api/card/api/gacha/result/?token=test', {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`伺服器回應錯誤 (${response.status})`);
         }
-      ],
-      "question": "本月運勢",
-      "ai_token": "hJzupJyRiC"
+
+        const data = await response.json();
+        setReading(data);
+        setLoading(false);
+
+      } catch (error) {
+        console.error('解析擷取錯誤:', error);
+        setError('無法取得解析，請稍後再試。');
+      }
     };
 
-    setTimeout(() => {
-      setReading(staticData);
-      setLoading(false);
-    }, 1500);
+    fetchResult();
   }, []);
 
   if (loading) {
@@ -184,12 +193,9 @@ const ReadingPage = () => {
         ))}
       </CardsContainer>
 
-      <ActionButton
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
-      >
+      <Question>
         {userQuestion || reading?.question}
-      </ActionButton>
+      </Question>
 
       <ActionButton
         whileHover={{ scale: 1.02 }}
