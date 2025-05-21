@@ -123,33 +123,62 @@ const AnalysisPage = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchAnalysis = async () => {
-      try {
-        const response = await fetch('https://ffsystem.ngrok.io/card/api/gacha/explanation/?ai_token=hIkm8WQ4Vv&cdr_pk=850&stream=true');
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
+  const fetchAnalysis = async () => {
+    try {
+      const response = await fetch('https://ffsystem.ngrok.io/card/api/gacha/explanation/?ai_token=hIkm8WQ4Vv&cdr_pk=850&stream=true');
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder('utf-8');
 
-        while (true) {
-          const { value, done } = await reader.read();
-          if (done) break;
-          
-          const text = decoder.decode(value);
-          setAnalysis(prev => prev + text);
+      let buffer = '';
+
+      while (true) {
+        const { value, done } = await reader!.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+
+        // 將 chunk 切成一行一行
+        const lines = buffer.split('\n');
+
+        // 把最後一行保留（可能是不完整的）
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          const trimmedLine = line.trim();
+          if (!trimmedLine || !trimmedLine.startsWith('data:')) continue;
+
+          const jsonStr = trimmedLine.replace(/^data:\s*/, '');
+
+          if (jsonStr === '[DONE]') {
+            setIsLoading(false);
+            return;
+          }
+
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const content = parsed.choices?.[0]?.delta?.content;
+            if (content) {
+              setAnalysis(prev => prev + content);
+            }
+          } catch (e) {
+            console.error('JSON parse error:', e);
+          }
         }
-        
-        setIsLoading(false);
-      } catch (error) {
-        console.error('Error fetching analysis:', error);
-        // For demo, add some content after delay
-        setTimeout(() => {
-          setAnalysis('這個月的運勢顯示出一個轉變的時期...\n\n你目前正處在一個重要的轉折點，KENAZ符文帶來創意和靈感的能量，這表示你將有機會在工作或個人發展上有新的突破。\n\nALGIZ符文增強你的直覺能力，建議你在這段時間多留意內在的聲音，特別是在做決策的時候。\n\nJERA符文象徵著循環和成長，提醒你保持耐心，一切都在正確的時間發展。');
-          setIsLoading(false);
-        }, 2000);
       }
-    };
 
-    fetchAnalysis();
-  }, []);
+      setIsLoading(false);
+    } catch (error) {
+      console.error('Error fetching analysis:', error);
+      // fallback（可省略）
+      setTimeout(() => {
+        setAnalysis('無法取得解析，請稍後再試。');
+        setIsLoading(false);
+      }, 2000);
+    }
+  };
+
+  fetchAnalysis();
+}, []);
 
   return (
     <PageContainer
