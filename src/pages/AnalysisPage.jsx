@@ -132,63 +132,24 @@ const AnalysisPage = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const controller = new AbortController();
-    const signal = controller.signal;
-
     const fetchAnalysis = async () => {
       try {
-        const response = await fetch('/api/card/api/gacha/explanation/?ai_token=hIkm8WQ4Vv&cdr_pk=850&stream=true', {
+        const response = await fetch('https://ffsystem.ngrok.io/card/api/gacha/explanation/?ai_token=hIkm8WQ4Vv&cdr_pk=850&stream=false', {
           method: 'GET',
           headers: {
-            'Accept': 'text/event-stream',
-            'Cache-Control': 'no-cache',
-            'Connection': 'keep-alive'
-          },
-          signal
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          }
         });
 
         if (!response.ok) {
           throw new Error(`伺服器回應錯誤 (${response.status})`);
         }
 
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder('utf-8');
-
-        while (true) {
-          const { value, done } = await reader.read();
-          if (done) break;
-
-          const chunk = decoder.decode(value);
-          const lines = chunk.split('\n');
-
-          for (const line of lines) {
-            if (line.trim() === '') continue;
-            if (line.includes('[DONE]')) {
-              setIsLoading(false);
-              return;
-            }
-
-            if (line.startsWith('data:')) {
-              const jsonStr = line.replace(/^data:\s*/, '').trim();
-              try {
-                const parsed = JSON.parse(jsonStr);
-                const content = parsed.choices?.[0]?.delta?.content;
-                if (content) {
-                  setAnalysis(prev => prev + content);
-                }
-              } catch (e) {
-                console.warn('JSON parsing warning:', e);
-              }
-            }
-          }
-        }
-
+        const data = await response.json();
+        setAnalysis(data.content || '無法取得解析內容');
         setIsLoading(false);
       } catch (error) {
-        if (error.name === 'AbortError') {
-          return;
-        }
-        
         console.error('解析擷取錯誤:', error);
         setError('無法取得解析，請稍後再試。');
         setIsLoading(false);
@@ -196,10 +157,6 @@ const AnalysisPage = () => {
     };
 
     fetchAnalysis();
-
-    return () => {
-      controller.abort();
-    };
   }, []);
 
   return (
