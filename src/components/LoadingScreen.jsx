@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react'
 import styled from 'styled-components'
 import { motion } from 'framer-motion'
-import TriangleSymbol from './symbols/TriangleSymbol'
+import CircleSymbol from './symbols/CircleSymbol'
 
 const LoadingContainer = styled.div`
   position: fixed;
@@ -31,6 +31,19 @@ const LoadingText = styled(motion.div)`
   text-align: center;
 `
 
+const CirclesWrapper = styled(motion.div)`
+  position: relative;
+  width: 100px;
+  height: 100px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+`
+
+const OuterCircle = styled.div`
+  position: absolute;
+`
+
 const LoadingScreen = () => {
   // Create particle effect
   useEffect(() => {
@@ -53,25 +66,34 @@ const LoadingScreen = () => {
         animate={{ opacity: 1 }}
         transition={{ duration: 1 }}
       >
-        <motion.div
-          animate={{ 
-            rotate: 360,
-            scale: [1, 1.05, 1]
-          }}
-          transition={{ 
-            rotate: { duration: 8, repeat: Infinity, ease: "linear" },
-            scale: { duration: 2, repeat: Infinity, ease: "easeInOut" }
-          }}
+        <CirclesWrapper
+          animate={{ rotate: 360 }}
+          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
         >
-          <TriangleSymbol size={80} />
-        </motion.div>
+          <OuterCircle style={{ transform: 'translate(-50%, -50%) rotate(0deg) translateX(40px)' }}>
+            <CircleSymbol size={30} withInnerCircle={false} />
+          </OuterCircle>
+          <OuterCircle style={{ transform: 'translate(-50%, -50%) rotate(120deg) translateX(40px)' }}>
+            <CircleSymbol size={30} withInnerCircle={false} />
+          </OuterCircle>
+          <OuterCircle style={{ transform: 'translate(-50%, -50%) rotate(240deg) translateX(40px)' }}>
+            <CircleSymbol size={30} withInnerCircle={false} />
+          </OuterCircle>
+          <CircleSymbol size={50} />
+        </CirclesWrapper>
         
         <LoadingText
           initial={{ opacity: 0 }}
-          animate={{ opacity: [0, 1, 0] }}
-          transition={{ duration: 2, repeat: Infinity }}
+          animate={{ opacity: [0, 1, 0.8, 1] }}
+          transition={{ 
+            duration: 4, 
+            repeat: Infinity, 
+            repeatType: "reverse",
+            ease: "easeInOut",
+            times: [0, 0.4, 0.7, 1] 
+          }}
         >
-          尋求智慧之光...
+          符文能量聚集中...
         </LoadingText>
       </SymbolContainer>
     </LoadingContainer>

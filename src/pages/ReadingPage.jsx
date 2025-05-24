@@ -4,6 +4,8 @@ import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { useAppContext } from '../context/AppContext';
 
+import CircleSymbol from '../components/symbols/CircleSymbol'
+
 const PageContainer = styled(motion.div)`
   min-height: 100vh;
   display: flex;
@@ -110,18 +112,32 @@ const LoadingContainer = styled.div`
   gap: var(--spacing-md);
 `;
 
-const LoadingText = styled.div`
+const SymbolContainer = styled(motion.div)`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+`;
+
+const LoadingText = styled(motion.div)`
+  margin-top: var(--spacing-lg);
+  font-weight: var(--font-weight-light);
   color: var(--color-text-secondary);
-  font-size: 0.9rem;
+  letter-spacing: 2px;
   text-align: center;
 `;
 
-const LoadingSymbol = styled(motion.div)`
-  width: 60px;
-  height: 60px;
-  border: 2px solid var(--color-symbol);
-  border-radius: 50%;
-  border-top-color: transparent;
+const CirclesWrapper = styled(motion.div)`
+  position: relative;
+  width: 100px;
+  height: 100px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+`;
+
+const OuterCircle = styled.div`
+  position: absolute;
 `;
 
 const ReadingPage = () => {
@@ -161,11 +177,41 @@ const ReadingPage = () => {
   if (loading) {
     return (
       <LoadingContainer>
-        <LoadingSymbol
+        <SymbolContainer
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 1 }}
+      >
+        <CirclesWrapper
           animate={{ rotate: 360 }}
-          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-        />
-        <LoadingText>解讀符文中...</LoadingText>
+          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+        >
+          <OuterCircle style={{ transform: 'translate(-50%, -50%) rotate(0deg) translateX(40px)' }}>
+            <CircleSymbol size={30} withInnerCircle={false} />
+          </OuterCircle>
+          <OuterCircle style={{ transform: 'translate(-50%, -50%) rotate(120deg) translateX(40px)' }}>
+            <CircleSymbol size={30} withInnerCircle={false} />
+          </OuterCircle>
+          <OuterCircle style={{ transform: 'translate(-50%, -50%) rotate(240deg) translateX(40px)' }}>
+            <CircleSymbol size={30} withInnerCircle={false} />
+          </OuterCircle>
+          <CircleSymbol size={50} />
+        </CirclesWrapper>
+        
+        <LoadingText
+          initial={{ opacity: 0 }}
+          animate={{ opacity: [0, 1, 0.8, 1] }}
+          transition={{ 
+            duration: 4, 
+            repeat: Infinity, 
+            repeatType: "reverse",
+            ease: "easeInOut",
+            times: [0, 0.4, 0.7, 1] 
+          }}
+        >
+          解讀符文...
+        </LoadingText>
+      </SymbolContainer>
       </LoadingContainer>
     );
   }
@@ -200,14 +246,6 @@ const ReadingPage = () => {
       <ActionButton
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
-        onClick={() => navigate('/')}
-      >
-        再次觀問
-      </ActionButton>
-
-      <ActionButton
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
       >
         分享好友
       </ActionButton>
@@ -217,7 +255,7 @@ const ReadingPage = () => {
         whileTap={{ scale: 0.98 }}
         onClick={() => navigate('/analysis')}
       >
-        深度解析（需等約30秒）
+        深度解析
       </AnalysisButton>
     </PageContainer>
   );

@@ -14,7 +14,7 @@
   --spacing-xl: 32px;
   --spacing-xxl: 48px;
   
-  --font-family: 'Noto Serif TC', serif;
+  --font-family: 'Noto Sans TC', sans-serif;
   --font-weight-light: 300;
   --font-weight-regular: 400;
   --font-weight-medium: 500;
@@ -22,6 +22,11 @@
   --transition-slow: 0.6s ease;
   --transition-medium: 0.4s ease;
   --transition-fast: 0.2s ease;
+  
+  /* Animation durations for text fade-ins */
+  --fade-duration-fast: 1.2s;
+  --fade-duration-medium: 2s;
+  --fade-duration-slow: 3s;
 }
 
 * {
@@ -63,4 +68,36 @@ body::before {
   opacity: 0.15;
   pointer-events: none;
   z-index: -1;
+}
+
+/* Text fade-in animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.fade-in-text {
+  opacity: 0;
+  animation: fadeIn var(--fade-duration-medium) ease-in-out forwards;
+}
+
+.fade-in-text-slow {
+  opacity: 0;
+  animation: fadeIn var(--fade-duration-slow) ease-in-out forwards;
+}
+
+.fade-in-text-delay-1 {
+  animation-delay: 0.5s;
+}
+
+.fade-in-text-delay-2 {
+  animation-delay: 1s;
+}
+
+.fade-in-text-delay-3 {
+  animation-delay: 1.5s;
 }

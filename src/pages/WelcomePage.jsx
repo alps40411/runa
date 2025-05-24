@@ -61,7 +61,7 @@ const SectionTitle = styled(motion.h2)`
 `
 
 const InputContainer = styled(motion.div)`
-  width: 120%;
+  width: 130%;
   margin-bottom: var(--spacing-lg);
   margin-top: 5px;
 `
@@ -70,11 +70,12 @@ const StyledInput = styled.input`
   width: 100%;
   height: 30px;
   padding: var(--spacing-md);
-  border: 1px solid var(--color-text-secondary);
+  border: 1px solid rgb(174, 175, 195);
   background-color: transparent;
   border-radius: 4px;
   font-size: 0.9rem;
   font-weight: var(--font-weight-light);
+  letter-spacing: 10px;
   text-align: center;
   
   &::placeholder {
@@ -90,7 +91,7 @@ const StyledInput = styled.input`
 `
 
 const SubmitButton = styled(motion.button)`
-  background-color: var(--color-accent);
+  background-color: rgb(174, 175, 195);
   color: white;
   border: none;
   border-radius: 4px;
@@ -99,7 +100,8 @@ const SubmitButton = styled(motion.button)`
   font-weight: var(--font-weight-regular);
   cursor: pointer;
   transition: background-color var(--transition-fast);
-  height: 30px;
+  height: 15px;
+  width: 120px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -148,7 +150,7 @@ const WelcomePage = () => {
     
     // Check if userQuestion is empty or only contains whitespace
     if (!userQuestion.trim()) {
-      alert('請輸入心中的問題')
+      alert('請輸入心中問題')
       return
     }
     
@@ -179,7 +181,7 @@ const WelcomePage = () => {
       <LogoContainer
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        transition={{ duration: 0.8, delay: 0.2 }}
+        transition={{ duration: 1.5, delay: 0.2 }}
       >
         <LogoImage src="/images/intro_icon.png" alt="Logo" />
       </LogoContainer>
@@ -187,15 +189,15 @@ const WelcomePage = () => {
       <Title
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.4 }}
+        transition={{ duration: 2.2, delay: 1, ease: "easeOut" }}
       >
         北歐神話眾神之父<br/>奧丁的祝福符文
       </Title>
       
       <Description
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.6 }}
+        transition={{ duration: 2.5, delay: 2, ease: "easeOut" }}
       >
         為我們帶來洞見，讓我們看見真實。<br/>
         用心聆聽盧恩的訊息。<br/>
@@ -208,7 +210,7 @@ const WelcomePage = () => {
       <SectionTitle
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ duration: 0.6, delay: 0.8 }}
+        transition={{ duration: 2, delay: 3 }}
       >
         解惑之路
       </SectionTitle>
@@ -229,7 +231,7 @@ const WelcomePage = () => {
         >
           <StyledInput
             type="text"
-            placeholder="請輸入心中的問題"
+            placeholder="請輸入心中問題"
             value={userQuestion}
             onChange={(e) => setUserQuestion(e.target.value)}
             onFocus={() => setIsInputFocused(true)}

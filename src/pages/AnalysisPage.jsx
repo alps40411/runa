@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { motion } from 'framer-motion';
-import TriangleSymbol from '../components/symbols/TriangleSymbol';
+import { motion, AnimatePresence } from 'framer-motion';
+
+import CircleSymbol from '../components/symbols/CircleSymbol'
 
 const PageContainer = styled(motion.div)`
   display: flex;
@@ -99,11 +100,7 @@ const LoadingContainer = styled.div`
   flex-direction: column;
   align-items: center;
   gap: var(--spacing-lg);
-`;
-
-const LoadingText = styled(motion.div)`
-  color: var(--color-text-secondary);
-  font-size: 0.9rem;
+  margin-top: 30%;
 `;
 
 const ImagesContainer = styled.div`
@@ -114,20 +111,139 @@ const ImagesContainer = styled.div`
   gap: 20px;
   margin-top: 10px;
   width: 100%;
+  perspective: 1000px;
 `;
 
-const ImageItem = styled.img`
+const ImageItem = styled(motion.img)`
   width: 80px;
   height: 80px;
   object-fit: contain;
   border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  transform-style: preserve-3d;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  
+  &:hover {
+    transform: translateY(-5px) scale(1.05);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.25);
+  }
 `;
+
+const SymbolContainer = styled(motion.div)`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+`;
+
+const LoadingText = styled(motion.div)`
+  margin-top: var(--spacing-md);
+  font-weight: var(--font-weight-light);
+  color: var(--color-text-secondary);
+  letter-spacing: 2px;
+  text-align: center;
+`;
+
+const CirclesWrapper = styled(motion.div)`
+  position: relative;
+  width: 100px;
+  height: 100px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+`;
+
+const OuterCircle = styled.div`
+  position: absolute;
+`;
+
+const TypewriterText = ({ htmlContent, delay = 70, onComplete }) => {
+  const [displayedHTML, setDisplayedHTML] = useState('');
+  const [isComplete, setIsComplete] = useState(false);
+  const textRef = useRef('');
+  const positionRef = useRef(0);
+  const htmlWithoutTagsRef = useRef('');
+  
+  // Extract text without HTML tags on first render
+  useEffect(() => {
+    // Create a temporary div to handle HTML content
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = htmlContent;
+    htmlWithoutTagsRef.current = tempDiv.textContent || '';
+    textRef.current = htmlContent;
+  }, [htmlContent]);
+  
+  useEffect(() => {
+    if (positionRef.current >= htmlWithoutTagsRef.current.length) {
+      setIsComplete(true);
+      if (onComplete) onComplete();
+      return;
+    }
+    
+    const timer = setTimeout(() => {
+      positionRef.current += 1;
+      
+      // Find the position in the original HTML
+      let plainTextPosition = 0;
+      let htmlPosition = 0;
+      let inTag = false;
+      let currentPlainTextPos = 0;
+      
+      while (currentPlainTextPos < positionRef.current && htmlPosition < textRef.current.length) {
+        const char = textRef.current[htmlPosition];
+        
+        if (char === '<') {
+          inTag = true;
+        } else if (char === '>') {
+          inTag = false;
+        } else if (!inTag) {
+          currentPlainTextPos++;
+        }
+        
+        htmlPosition++;
+      }
+      
+      setDisplayedHTML(textRef.current.substring(0, htmlPosition));
+    }, delay);
+    
+    return () => clearTimeout(timer);
+  }, [displayedHTML, delay, onComplete]);
+  
+  return <div dangerouslySetInnerHTML={{ __html: displayedHTML }} />;
+};
 
 const AnalysisPage = () => {
   const navigate = useNavigate();
   const [analysis, setAnalysis] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isTypingComplete, setIsTypingComplete] = useState(false);
+  const [footerImage, setFooterImage] = useState([]);
+
+  useEffect(() => {
+    const fetchFooterImage = async () => {
+      try {
+        const response = await fetch('/api/card/api/gacha/result/?token=test', {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`伺服器回應錯誤 (${response.status})`);
+        }
+
+        const data = await response.json();
+        setFooterImage(data.footer || []);
+      } catch (error) {
+        console.error('Footer 圖片擷取錯誤:', error);
+      }
+    };
+
+    fetchFooterImage();
+  }, []);
 
   useEffect(() => {
     const fetchAnalysis = async () => {
@@ -182,25 +298,41 @@ const AnalysisPage = () => {
 
       {isLoading ? (
         <LoadingContainer>
-          <motion.div
-            animate={{ 
-              rotate: 360,
-              scale: [1, 1.05, 1]
-            }}
-            transition={{ 
-              rotate: { duration: 8, repeat: Infinity, ease: "linear" },
-              scale: { duration: 2, repeat: Infinity, ease: "easeInOut" }
-            }}
-          >
-            <TriangleSymbol size={60} />
-          </motion.div>
-          <LoadingText
+          <SymbolContainer
             initial={{ opacity: 0 }}
-            animate={{ opacity: [0, 1, 0] }}
-            transition={{ duration: 2, repeat: Infinity }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 1 }}
           >
-            解讀神諭中...
-          </LoadingText>
+            <CirclesWrapper
+              animate={{ rotate: 360 }}
+              transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+            >
+              <OuterCircle style={{ transform: 'translate(-50%, -50%) rotate(0deg) translateX(40px)' }}>
+                <CircleSymbol size={30} withInnerCircle={false} />
+              </OuterCircle>
+              <OuterCircle style={{ transform: 'translate(-50%, -50%) rotate(120deg) translateX(40px)' }}>
+                <CircleSymbol size={30} withInnerCircle={false} />
+              </OuterCircle>
+              <OuterCircle style={{ transform: 'translate(-50%, -50%) rotate(240deg) translateX(40px)' }}>
+                <CircleSymbol size={30} withInnerCircle={false} />
+              </OuterCircle>
+              <CircleSymbol size={50} />
+            </CirclesWrapper>
+            
+            <LoadingText
+              initial={{ opacity: 0 }}
+              animate={{ opacity: [0, 1, 0.8, 1] }}
+              transition={{ 
+                duration: 4, 
+                repeat: Infinity, 
+                repeatType: "reverse",
+                ease: "easeInOut",
+                times: [0, 0.4, 0.7, 1] 
+              }}
+            >
+              解讀神諭中...
+            </LoadingText>
+          </SymbolContainer>
         </LoadingContainer>
       ) : error ? (
         <>
@@ -235,13 +367,79 @@ const AnalysisPage = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.4 }}
           >
-            <AnalysisText dangerouslySetInnerHTML={{ __html: analysis }} />
+            <AnalysisText>
+              <TypewriterText 
+                htmlContent={analysis} 
+                delay={70} 
+                onComplete={() => setIsTypingComplete(true)} 
+              />
+            </AnalysisText>
           </AnalysisContainer>
-          <ImagesContainer>
-            <ImageItem src="/images/tutor.png" alt="Tutor" />
-            <ImageItem src="/images/activity.png" alt="Activity" />
-            <ImageItem src="/images/aiya.png" alt="AIYA" />
-          </ImagesContainer>
+          
+          <AnimatePresence>
+            {isTypingComplete && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8 }}
+                style={{ width: '100%' }}
+              >
+                <ImagesContainer>
+                  {footerImage && footerImage.length > 0 ? (
+                    footerImage.map((image, index) => (
+                      <ImageItem 
+                        key={index}
+                        src={image.image} 
+                        alt={image.push_text || 'Image'}
+                        initial={{ y: 40, opacity: 0, rotateY: -10, rotateX: 5 }}
+                        animate={{ 
+                          y: 0, 
+                          opacity: 1,
+                          rotateY: 0,
+                          rotateX: 5,
+                          z: 20,
+                          transition: { 
+                            duration: 0.8,
+                            delay: 0.1 * (index + 1)
+                          }
+                        }}
+                        whileHover={{ 
+                          scale: 1.1, 
+                          y: -5,
+                          rotateX: 10,
+                          boxShadow: "0 20px 30px rgba(0, 0, 0, 0.25)" 
+                        }}
+                      />
+                    ))
+                  ) : (
+                    // Fallback image if API doesn't return any
+                    <ImageItem 
+                      src="/images/tutor.png" 
+                      alt="Tutor"
+                      initial={{ y: 40, opacity: 0, rotateY: -10, rotateX: 5 }}
+                      animate={{ 
+                        y: 0, 
+                        opacity: 1,
+                        rotateY: 0,
+                        rotateX: 5,
+                        z: 20,
+                        transition: { 
+                          duration: 0.8,
+                          delay: 0.1
+                        }
+                      }}
+                      whileHover={{ 
+                        scale: 1.1, 
+                        y: -5,
+                        rotateX: 10,
+                        boxShadow: "0 20px 30px rgba(0, 0, 0, 0.25)" 
+                      }}
+                    />
+                  )}
+                </ImagesContainer>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </>
       )}
     </PageContainer>
