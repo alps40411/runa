@@ -16,11 +16,13 @@ const PageContainer = styled(motion.div)`
   overflow: hidden;
   width: 100%;
   background-image: url('/images/stone_bg.png');
-  background-size: contain;
+  background-size: 100% auto;
   background-position: center;
+  /* background-repeat: no-repeat; */
   padding: 40px 20px;
   box-sizing: border-box;
   background-color: #f8f8f5;
+  will-change: opacity, transform;
 `
 
 const LogoContainer = styled(motion.div)`
@@ -143,6 +145,14 @@ const WelcomePage = () => {
   const { userQuestion, setUserQuestion } = useAppContext()
   const [isInputFocused, setIsInputFocused] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [bgLoaded, setBgLoaded] = useState(false)
+  
+  // 預加載背景圖片
+  useEffect(() => {
+    const img = new Image();
+    img.src = '/images/stone_bg.png';
+    img.onload = () => setBgLoaded(true);
+  }, []);
   
   const handleSubmit = async (e) => {
     e.preventDefault()

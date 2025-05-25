@@ -14,6 +14,7 @@ const LoadingContainer = styled.div`
   align-items: center;
   background-color: var(--color-background);
   z-index: 1000;
+  transition: opacity 0.8s ease;
 `
 
 const SymbolContainer = styled(motion.div)`
