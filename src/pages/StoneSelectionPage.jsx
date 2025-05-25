@@ -17,10 +17,9 @@ const PageContainer = styled(motion.div)`
   position: relative;
   overflow: hidden;
   width: 100%;
-  background-image: url('/images/stone_bg.jpg');
+  background-image: url('/images/stone_bg.png');
   background-size: contain;
   background-position: center;
-  background-repeat: no-repeat;
   padding: 40px 20px;
   box-sizing: border-box;
   background-color: #f8f8f5;
