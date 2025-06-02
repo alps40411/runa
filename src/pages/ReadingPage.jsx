@@ -49,6 +49,15 @@ const CardImage = styled.img`
   height: 80px;
   object-fit: cover;
   border-radius: 4px;
+  opacity: ${props => props.isLoaded ? 1 : 0};
+  transition: opacity 0.3s ease-in-out;
+`;
+
+const CardImagePlaceholder = styled.div`
+  width: 80px;
+  height: 80px;
+  border-radius: 4px;
+  background-color: rgba(200, 200, 200, 0.3);
 `;
 
 const CardInfo = styled.div`
@@ -141,37 +150,31 @@ const OuterCircle = styled.div`
 
 const ReadingPage = () => {
   const navigate = useNavigate();
-  const { userQuestion } = useAppContext();
-  const [reading, setReading] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { userQuestion, result } = useAppContext();
+  const [loading, setLoading] = useState(false);
+  const [loadedImages, setLoadedImages] = useState({});
 
+  // 預加載圖片
   useEffect(() => {
-    const fetchResult = async () => {
-      try {
-        const response = await fetch('api/card/api/gacha/result/?token=test', {
-          method: 'GET',
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
+    if (result?.card) {
+      const preloadImages = () => {
+        result.card.forEach((card, index) => {
+          if (card.image) {
+            const img = new Image();
+            img.onload = () => {
+              setLoadedImages(prev => ({
+                ...prev,
+                [index]: true
+              }));
+            };
+            img.src = card.image;
           }
         });
-
-        if (!response.ok) {
-          throw new Error(`伺服器回應錯誤 (${response.status})`);
-        }
-
-        const data = await response.json();
-        setReading(data);
-        setLoading(false);
-
-      } catch (error) {
-        console.error('解析擷取錯誤:', error);
-        setError('無法取得解析，請稍後再試。');
-      }
-    };
-
-    fetchResult();
-  }, []);
+      };
+      
+      preloadImages();
+    }
+  }, [result]);
 
   if (loading) {
     return (
@@ -222,14 +225,27 @@ const ReadingPage = () => {
       exit={{ opacity: 0 }}
     >
       <CardsContainer>
-        {reading?.card.map((card, index) => (
+        {result?.card.map((card, index) => (
           <Card
             key={index}
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: index * 0.2 }}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ 
+              duration: 0.5,
+              delay: index * 0.15,
+              ease: "easeOut"
+            }}
           >
-            <CardImage src={card.image} alt={card.name} />
+            {loadedImages[index] ? (
+              <CardImage 
+                src={card.image} 
+                alt={card.name} 
+                isLoaded={true}
+                loading="eager"
+              />
+            ) : (
+              <CardImagePlaceholder />
+            )}
             <CardInfo>
               <CardTitle>[{card.name}]</CardTitle>
               <CardDescription>{card.description}</CardDescription>
@@ -239,7 +255,7 @@ const ReadingPage = () => {
       </CardsContainer>
 
       <Question>
-        {userQuestion || reading?.question}
+        {userQuestion}
       </Question>
 
       <ActionButton

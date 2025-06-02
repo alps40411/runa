@@ -165,10 +165,11 @@ const WelcomePage = () => {
     
     setIsSubmitting(true)
     
+    // Delay navigation to allow exit animation to complete
     setTimeout(() => {
       setIsSubmitting(false)
       navigate('/stone-selection')
-    }, 1000)
+    }, 800)
   }
   
   return (
@@ -176,17 +177,8 @@ const WelcomePage = () => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.6 }}
-    >
-      <SymbolsContainer>
-        <TopRightSymbol>
-          <CircleSymbol size={32} />
-        </TopRightSymbol>
-        <BottomLeftSymbol>
-          <CircleSymbol size={40} withInnerCircle={false} />
-        </BottomLeftSymbol>
-      </SymbolsContainer>
-      
+      transition={{ duration: 0.8 }}
+    > 
       <LogoContainer
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}

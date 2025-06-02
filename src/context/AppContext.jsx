@@ -9,6 +9,7 @@ export const AppProvider = ({ children }) => {
   const [userQuestion, setUserQuestion] = useState('')
   const [readingResult, setReadingResult] = useState(null)
   const [isLiffReady, setIsLiffReady] = useState(false)
+  const [result, setResult] = useState(null)
   
   // This would contain the logic to interact with an API
   // to generate spiritual readings based on user input
@@ -34,7 +35,9 @@ export const AppProvider = ({ children }) => {
     setReadingResult,
     generateReading,
     isLiffReady,
-    setIsLiffReady
+    setIsLiffReady,
+    result,
+    setResult
   }
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>

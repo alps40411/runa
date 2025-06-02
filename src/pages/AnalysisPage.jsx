@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAppContext } from '../context/AppContext';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -118,8 +119,9 @@ const ImageItem = styled(motion.img)`
   width: 80px;
   height: 80px;
   object-fit: contain;
-  border-radius: 8px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  background-color: #f9f9f9; /* 卡片背景色 */
+  border-radius: 10px; /* 圓角 */
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.4);
   transform-style: preserve-3d;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   
@@ -218,32 +220,7 @@ const AnalysisPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isTypingComplete, setIsTypingComplete] = useState(false);
-  const [footerImage, setFooterImage] = useState([]);
-
-  useEffect(() => {
-    const fetchFooterImage = async () => {
-      try {
-        const response = await fetch('/api/card/api/gacha/result/?token=test', {
-          method: 'GET',
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-          }
-        });
-
-        if (!response.ok) {
-          throw new Error(`伺服器回應錯誤 (${response.status})`);
-        }
-
-        const data = await response.json();
-        setFooterImage(data.footer || []);
-      } catch (error) {
-        console.error('Footer 圖片擷取錯誤:', error);
-      }
-    };
-
-    fetchFooterImage();
-  }, []);
+  const { result } = useAppContext();
 
   useEffect(() => {
     const fetchAnalysis = async () => {
@@ -385,8 +362,8 @@ const AnalysisPage = () => {
                 style={{ width: '100%' }}
               >
                 <ImagesContainer>
-                  {footerImage && footerImage.length > 0 ? (
-                    footerImage.map((image, index) => (
+                  {result.footer && result.footer.length > 0 ? (
+                    result.footer.map((image, index) => (
                       <ImageItem 
                         key={index}
                         src={image.image} 

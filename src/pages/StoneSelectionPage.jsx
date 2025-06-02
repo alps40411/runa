@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { EffectCoverflow } from 'swiper/modules';
 import { useAppContext } from '../context/AppContext';
+import CircleSymbol from '../components/symbols/CircleSymbol';
 import 'swiper/css';
 import 'swiper/css/effect-coverflow';
 
@@ -18,7 +19,7 @@ const PageContainer = styled(motion.div)`
   overflow: hidden;
   width: 100%;
   background-image: url('/images/stone_bg.png');
-  background-size: contain;
+  background-size: 100% auto;
   background-position: center;
   padding: 40px 20px;
   box-sizing: border-box;
@@ -41,17 +42,28 @@ const SelectedStonesContainer = styled.div`
 `;
 
 const StoneSlot = styled(motion.div)`
-  width: 70px;
-  height: 70px;
+  width: 80px;
+  height: 100px;
   border-radius: 50%;
-  background-color: ${props => props.image ? 'transparent' : '#cdcdc9'};
-  background-image: ${props => props.image ? `url(${props.image})` : 'none'};
+  background-color: white;
   background-size: cover;
   background-position: center;
   margin-top: 20px;
+  position: relative;
 `;
 
-const StoneGalleryContainer = styled.div`
+const RuneImage = styled(motion.img)`
+  width: 70%;
+  height: 70%;
+  object-fit: contain;
+  position: absolute;
+  top: 60%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+`;
+
+const StoneGalleryContainer = styled(motion.div)`
   width: 100%;
   height: 300px;
   margin-bottom: var(--spacing-xl);
@@ -92,14 +104,12 @@ const StoneGalleryContainer = styled.div`
     &-prev, &[data-position="prev"],
     &-next, &[data-position="next"] {
       transform: scale(0.9); /* 保持原始大小 */
-      opacity: 0.7;
       margin-top: 40px !important;
     }
     
     &[data-position="prev-prev"],
     &[data-position="next-next"] {
       transform: scale(0.7); /* 保持原始大小 */
-      opacity: 0.6;
       margin-top: 100px !important;
     }
     
@@ -202,37 +212,107 @@ const SubmitButton = styled(motion.button)`
   }
 `
 
-const TypewriterText = ({ text, delay = 70, startDelay = 0 }) => {
-  const [displayText, setDisplayText] = useState('');
-  const [currentIndex, setCurrentIndex] = useState(0);
-  
-  useEffect(() => {
-    let timeout;
-    
-    if (currentIndex <= text.length) {
-      timeout = setTimeout(() => {
-        setDisplayText(text.substring(0, currentIndex));
-        setCurrentIndex(currentIndex + 1);
-      }, currentIndex === 0 ? startDelay : delay);
-    }
-    
-    return () => clearTimeout(timeout);
-  }, [currentIndex, text, delay, startDelay]);
-  
-  return <span>{displayText}</span>;
-};
+const LoadingContainer = styled(motion.div)`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(248, 248, 245, 0.9);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+`;
+
+const SymbolContainer = styled(motion.div)`
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+`;
+
+const CirclesWrapper = styled(motion.div)`
+  position: relative;
+  width: 100px;
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const OuterCircle = styled.div`
+  position: absolute;
+  top: 50%;
+  left: 50%;
+`;
+
+const LoadingText = styled(motion.p)`
+  margin-top: 40px;
+  font-size: 1rem;
+  color: #5b5c5b;
+  font-weight: var(--font-weight-medium);
+  letter-spacing: 2px;
+`;
 
 const StoneSelectionPage = () => {
   const navigate = useNavigate();
-  const { userQuestion } = useAppContext();
+  const { userQuestion, setUserQuestion, result, setResult } = useAppContext();
   const [selectedStones, setSelectedStones] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeIndex, setActiveIndex] = useState(12);
+  const [loading, setLoading] = useState(false);
+  const [runes, setRunes] = useState([]);
   
   const stones = Array.from({ length: 25 }, (_, index) => ({
     id: index + 1,
     image: `/images/stone${(index % 5) + 1}.png`
   }));
+
+  useEffect(() => {
+    let isMounted = true;
+    
+    const fetchData = async () => {
+      try {
+        const response = await fetch('api/card/api/gacha/result/?token=test', {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`伺服器回應錯誤 (${response.status})`);
+        }
+
+        const data = await response.json();
+        
+        if (isMounted) {
+          setResult(data);
+          // Extract all image_s values from data.card and set them at once
+          if (data.card && Array.isArray(data.card)) {
+            const runeImages = data.card.map(item => item.image_s);
+            setRunes(runeImages);
+          }
+          
+          console.log("data: ", data);
+        }
+      } catch (error) {
+        console.error('解析擷取錯誤:', error);
+      }
+    };
+    
+    fetchData();
+    
+    // Cleanup function to prevent state updates if component unmounts
+    return () => {
+      isMounted = false;
+    };
+  }, []); // Empty dependency array means this runs once on mount
 
   const handleStoneClick = (stoneId) => {
     if (selectedStones.includes(stoneId)) {
@@ -245,7 +325,15 @@ const StoneSelectionPage = () => {
   const handleConfirm = (e) => {
     e.preventDefault();
     if (selectedStones.length === 3) {
-      navigate('/reading');
+      setIsSubmitting(true);
+      setLoading(true);
+      
+      // Wait for 5 seconds before navigating
+      setTimeout(() => {
+        setIsSubmitting(false);
+        setLoading(false);
+        navigate('/reading');
+      }, 5000);
     } else {
       alert('請選擇3張牌');
     }
@@ -256,47 +344,111 @@ const StoneSelectionPage = () => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
+      transition={{ duration: 0.8 }}
     >
-      <SelectedStonesContainer>
-        {[0, 1, 2].map((index) => (
-          <StoneSlot 
-            key={index}
-            image={selectedStones[index] ? `/images/stone${(selectedStones[index] % 5) + 1}.png` : null}
-            animate={
-              selectedStones[index] 
-                ? {
-                    opacity: [0.7, 1, 0.7],
-                    boxShadow: [
-                      '0 0 5px rgba(255, 255, 255, 0.3)',
-                      '0 0 15px rgba(255, 255, 255, 0.7)',
-                      '0 0 5px rgba(255, 255, 255, 0.3)'
-                    ]
-                  } 
-                : {
-                    opacity: [0.4, 0.7, 0.4],
-                    boxShadow: [
-                      '0 0 3px rgba(255, 255, 255, 0.2)',
-                      '0 0 8px rgba(255, 255, 255, 0.4)',
-                      '0 0 3px rgba(255, 255, 255, 0.2)'
-                    ]
-                  }
-            }
-            transition={{
-              duration: selectedStones[index] ? 3 : 4,
-              ease: "easeInOut",
-              times: [0, 0.5, 1],
-              repeat: Infinity,
-              repeatType: "mirror"
-            }}
-          />
-        ))}
-      </SelectedStonesContainer>
+      {loading && (
+        <LoadingContainer
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <SymbolContainer
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 1 }}
+          >
+            <CirclesWrapper
+              animate={{ rotate: 360 }}
+              transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+            >
+              <OuterCircle style={{ transform: 'translate(-50%, -50%) rotate(0deg) translateX(40px)' }}>
+                <CircleSymbol size={30} withInnerCircle={false} />
+              </OuterCircle>
+              <OuterCircle style={{ transform: 'translate(-50%, -50%) rotate(120deg) translateX(40px)' }}>
+                <CircleSymbol size={30} withInnerCircle={false} />
+              </OuterCircle>
+              <OuterCircle style={{ transform: 'translate(-50%, -50%) rotate(240deg) translateX(40px)' }}>
+                <CircleSymbol size={30} withInnerCircle={false} />
+              </OuterCircle>
+              <CircleSymbol size={50} />
+            </CirclesWrapper>
+            
+            <LoadingText
+              initial={{ opacity: 0 }}
+              animate={{ opacity: [0, 1, 0.8, 1] }}
+              transition={{ 
+                duration: 4, 
+                repeat: Infinity, 
+                repeatType: "reverse",
+                ease: "easeInOut",
+                times: [0, 0.4, 0.7, 1] 
+              }}
+            >
+              解讀符文...
+            </LoadingText>
+          </SymbolContainer>
+        </LoadingContainer>
+      )}
 
-      <Title>
-        <TypewriterText text="請依直覺點選3張牌" startDelay={500} />
-      </Title>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 1, delay: 0.3 }}
+      >
+        <SelectedStonesContainer>
+          {[0, 1, 2].map((index) => (
+            <div key={index} style={{ position: 'relative' }}>
+              <StoneSlot
+                transition={{
+                  duration: selectedStones[index] ? 3 : 4,
+                  ease: "easeInOut",
+                  times: [0, 0.5, 1],
+                  repeat: Infinity,
+                  repeatType: "mirror"
+                }}
+              />
+              <AnimatePresence>
+                {selectedStones[index] && runes[index] && (
+                  <RuneImage 
+                    src={runes[index]} 
+                    alt="Rune" 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 1.5, ease: "easeIn" }}
+                  />
+                )}
+                {selectedStones[index] && !runes[index] && (
+                  <RuneImage 
+                    src="https://react-fflinebot.s3.amazonaws.com/img/Rune/14s.png" 
+                    alt="Default Rune" 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 1.5, ease: "easeIn" }}
+                  />
+                )}
+              </AnimatePresence>
+            </div>
+          ))}
+        </SelectedStonesContainer>
+      </motion.div>
 
-      <StoneGalleryContainer>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 1, delay: 0.9 }}
+      >
+      
+        <Title>
+          左右滑動依直覺點選3張牌
+        </Title>
+      </motion.div>
+
+      <StoneGalleryContainer
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 1, delay: 0.7 }}
+      >
         <Swiper
           effect="coverflow"
           grabCursor={true}
@@ -327,7 +479,6 @@ const StoneSelectionPage = () => {
               }
             >
               <Stone
-                image={stone.image}
                 isSelected={selectedStones.includes(stone.id)}
                 isActive={index === activeIndex}
                 onClick={() => handleStoneClick(stone.id)}
@@ -339,48 +490,57 @@ const StoneSelectionPage = () => {
         </Swiper>
       </StoneGalleryContainer>
 
-      <SectionTitle
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.6, delay: 0.8 }}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 1, delay: 0.9 }}
       >
-        解惑之路
-      </SectionTitle>
+        <SectionTitle>
+          解惑之路
+        </SectionTitle>
+      </motion.div>
       
-      <form onSubmit={handleConfirm}
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center'
-        }}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 1, delay: 1.1 }}
       >
-        <InputContainer
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 1 }}
-          whileTap={{ scale: 0.98 }}
+        <form onSubmit={handleConfirm}
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
         >
-          <StyledInput
-            type="text"
-            placeholder="請輸入心中問題"
-            value={userQuestion}
-          />
-        </InputContainer>
-        
-        <AnimatePresence>
-          <SubmitButton
-            type="submit"
-            disabled={isSubmitting}
-            initial={{ opacity: 0, y: 20 }}
+          <InputContainer
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 10 }}
-            whileTap={{ scale: 0.95 }}
+            transition={{ duration: 0.8, delay: 1.3 }}
+            whileTap={{ scale: 0.98 }}
           >
-            {isSubmitting ? '尋求中...' : '解答'}
-          </SubmitButton>
-        </AnimatePresence>
-      </form>
+            <StyledInput
+              type="text"
+              placeholder="請輸入心中問題"
+              value={userQuestion}
+            />
+          </InputContainer>
+          
+          <AnimatePresence>
+            <SubmitButton
+              type="submit"
+              disabled={isSubmitting}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 1.5 }}
+              exit={{ opacity: 0, y: 10 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              {isSubmitting ? '尋求中...' : '解答'}
+            </SubmitButton>
+          </AnimatePresence>
+        </form>
+      </motion.div>
     </PageContainer>
   );
 };

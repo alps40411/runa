@@ -1,11 +1,28 @@
 import React, { useState, useEffect } from 'react'
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom'
+import { AnimatePresence } from 'framer-motion'
 import WelcomePage from './pages/WelcomePage'
 import StoneSelectionPage from './pages/StoneSelectionPage'
 import ReadingPage from './pages/ReadingPage'
 import AnalysisPage from './pages/AnalysisPage'
 import { AppProvider } from './context/AppContext'
 import LoadingScreen from './components/LoadingScreen'
+
+// This component wraps our routes with AnimatePresence
+const AnimatedRoutes = () => {
+  const location = useLocation();
+  
+  return (
+    <AnimatePresence mode="wait">
+      <Routes location={location} key={location.pathname}>
+        <Route path="/" element={<WelcomePage />} />
+        <Route path="/stone-selection" element={<StoneSelectionPage />} />
+        <Route path="/reading" element={<ReadingPage />} />
+        <Route path="/analysis" element={<AnalysisPage />} />
+      </Routes>
+    </AnimatePresence>
+  );
+};
 
 function App() {
   const [loading, setLoading] = useState(true)
@@ -40,12 +57,7 @@ function App() {
       }}>
         {welcomeReady && (
           <Router>
-            <Routes>
-              <Route path="/" element={<WelcomePage />} />
-              <Route path="/stone-selection" element={<StoneSelectionPage />} />
-              <Route path="/reading" element={<ReadingPage />} />
-              <Route path="/analysis" element={<AnalysisPage />} />
-            </Routes>
+            <AnimatedRoutes />
           </Router>
         )}
         
