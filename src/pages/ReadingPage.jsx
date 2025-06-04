@@ -49,8 +49,9 @@ const CardImage = styled.img`
   height: 80px;
   object-fit: cover;
   border-radius: 4px;
-  opacity: ${props => props.isLoaded ? 1 : 0};
-  transition: opacity 0.3s ease-in-out;
+  opacity: ${props => props.isVisible ? 1 : 0};
+  transition: opacity 1.2s ease-in-out;
+  transition-delay: ${props => props.animationDelay}s;
 `;
 
 const CardImagePlaceholder = styled.div`
@@ -58,6 +59,13 @@ const CardImagePlaceholder = styled.div`
   height: 80px;
   border-radius: 4px;
   background-color: rgba(200, 200, 200, 0.3);
+  position: absolute;
+`;
+
+const ImageContainer = styled.div`
+  position: relative;
+  width: 80px;
+  height: 80px;
 `;
 
 const CardInfo = styled.div`
@@ -153,6 +161,7 @@ const ReadingPage = () => {
   const { userQuestion, result } = useAppContext();
   const [loading, setLoading] = useState(false);
   const [loadedImages, setLoadedImages] = useState({});
+  const [animationComplete, setAnimationComplete] = useState({});
 
   // 預加載圖片
   useEffect(() => {
@@ -235,17 +244,29 @@ const ReadingPage = () => {
               delay: index * 0.15,
               ease: "easeOut"
             }}
+            onAnimationComplete={() => {
+              setAnimationComplete(prev => ({
+                ...prev,
+                [index]: true
+              }));
+            }}
           >
-            {loadedImages[index] ? (
+            <ImageContainer>
+              {!loadedImages[index] && <CardImagePlaceholder />}
               <CardImage 
                 src={card.image} 
                 alt={card.name} 
-                isLoaded={true}
+                isVisible={loadedImages[index] && animationComplete[index]}
                 loading="eager"
+                animationDelay={0.3}
+                onLoad={() => {
+                  setLoadedImages(prev => ({
+                    ...prev,
+                    [index]: true
+                  }));
+                }}
               />
-            ) : (
-              <CardImagePlaceholder />
-            )}
+            </ImageContainer>
             <CardInfo>
               <CardTitle>[{card.name}]</CardTitle>
               <CardDescription>{card.description}</CardDescription>
