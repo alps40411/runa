@@ -220,12 +220,18 @@ const AnalysisPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isTypingComplete, setIsTypingComplete] = useState(false);
-  const { result } = useAppContext();
+  const { result, userQuestion, aiToken, cdrPk } = useAppContext();
 
   useEffect(() => {
     const fetchAnalysis = async () => {
+      if (!aiToken || !cdrPk) {
+        setError('無法取得分析資訊，請重新嘗試付款流程。');
+        setIsLoading(false);
+        return;
+      }
+
       try {
-        const response = await fetch('/api/card/api/gacha/explanation/?ai_token=hIkm8WQ4Vv&cdr_pk=850&stream=false', {
+        const response = await fetch(`/api/card/api/gacha/explanation/?ai_token=${aiToken}&cdr_pk=${cdrPk}&question=${encodeURIComponent(userQuestion)}`, {
           method: 'GET',
           headers: {
             'Accept': 'application/json',
@@ -238,17 +244,17 @@ const AnalysisPage = () => {
         }
 
         const data = await response.json();
-        setAnalysis(data.explanation || '無法取得解析內容');
+        setAnalysis(data.explanation || '暫無分析結果');
         setIsLoading(false);
       } catch (error) {
         console.error('解析擷取錯誤:', error);
-        setError('無法取得解析，請稍後再試。');
+        setError('無法取得分析結果，請稍後再試。');
         setIsLoading(false);
       }
     };
 
     fetchAnalysis();
-  }, []);
+  }, [aiToken, cdrPk, userQuestion]);
 
   return (
     <PageContainer

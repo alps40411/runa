@@ -213,7 +213,14 @@ const ModalButton = styled(motion.button)`
 
 const ReadingPage = () => {
   const navigate = useNavigate();
-  const { userQuestion, result } = useAppContext();
+  const { 
+    userQuestion, 
+    result, 
+    cdrPk, 
+    setCdrPk, 
+    aiToken, 
+    setAiToken 
+  } = useAppContext();
   const [loading, setLoading] = useState(false);
   const [loadedImages, setLoadedImages] = useState({});
   const [animationComplete, setAnimationComplete] = useState({});
@@ -247,6 +254,66 @@ const ReadingPage = () => {
       navigate('/analysis');
     } else {
       setShowModal(true);
+    }
+  };
+  
+  const handlePayment = async () => {
+    if (!cdrPk) {
+      alert('系統錯誤：無法取得卡片資訊');
+      return;
+    }
+
+    try {
+      // Get payment URL
+      const response = await fetch(`/api/card/api/gacha/get_ai_token/?cdr_pk=${cdrPk}&vendor_code=NewebPay`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Payment initiation failed (${response.status})`);
+      }
+
+      const data = await response.json();
+      
+      // Open payment URL in new window
+      window.location.href = data.payment_url;
+      
+      // Start polling for payment completion
+      const pollInterval = setInterval(async () => {
+        try {
+          const explanationResponse = await fetch(`/api/card/api/gacha/explanation/?ai_token=${data.ai_token}&cdr_pk=${cdrPk}&question=${encodeURIComponent(userQuestion)}`, {
+            method: 'GET',
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json'
+            }
+          });
+
+          if (explanationResponse.ok) {
+            // Payment successful
+            clearInterval(pollInterval);
+            setAiToken(data.ai_token);
+            setHasToken(true);
+            setShowModal(false);
+            navigate('/analysis');
+          }
+        } catch (error) {
+          console.error('Error checking payment status:', error);
+        }
+      }, 3000); // Poll every 3 seconds
+
+      // Clear polling after 5 minutes (300000 ms)
+      setTimeout(() => {
+        clearInterval(pollInterval);
+      }, 300000);
+
+    } catch (error) {
+      console.error('Payment error:', error);
+      alert('付款過程發生錯誤，請稍後再試。');
     }
   };
   
@@ -385,10 +452,7 @@ const ReadingPage = () => {
                   primary
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => {
-                    // Handle recharge logic here
-                    setShowModal(false);
-                  }}
+                  onClick={handlePayment}
                 >
                   立即充值
                 </ModalButton>
