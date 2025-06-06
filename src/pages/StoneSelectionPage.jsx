@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -6,6 +6,7 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import { EffectCoverflow } from 'swiper/modules';
 import { useAppContext } from '../context/AppContext';
 import CircleSymbol from '../components/symbols/CircleSymbol';
+import { apiRequestJson } from '../utils/api';
 import 'swiper/css';
 import 'swiper/css/effect-coverflow';
 
@@ -277,19 +278,7 @@ const StoneSelectionPage = () => {
     
     const fetchData = async () => {
       try {
-        const response = await fetch('api/card/api/gacha/result/?token=test', {
-          method: 'GET',
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-          }
-        });
-
-        if (!response.ok) {
-          throw new Error(`伺服器回應錯誤 (${response.status})`);
-        }
-
-        const data = await response.json();
+        const data = await apiRequestJson('/card/api/gacha/result/?token=test');
         
         if (isMounted) {
           setResult(data);

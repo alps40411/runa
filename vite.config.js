@@ -27,5 +27,8 @@ export default defineConfig({
         },
       },
     },
+    allowedHosts: [
+      '22ba-2401-e180-8dd8-2912-7dab-a0ee-e868-c090.ngrok-free.app', // 允许 ngrok 分配的域名
+    ],
   },
 });

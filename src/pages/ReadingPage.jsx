@@ -248,7 +248,8 @@ const ReadingPage = () => {
     if (hasToken) {
       navigate('/analysis');
     } else {
-      setShowModal(true);
+      // setShowModal(true);
+      navigate('/analysis');
     }
   };
   

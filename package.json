@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@line/liff": "^2.23.1",
+    "@line/liff": "^2.26.1",
     "@react-spring/web": "^9.7.3",
     "framer-motion": "^10.16.4",
     "react": "^18.2.0",

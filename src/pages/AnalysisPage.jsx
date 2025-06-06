@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
+import liff from "@line/liff";
+import { apiRequestJson } from '../utils/api';
 
 import CircleSymbol from '../components/symbols/CircleSymbol'
 
@@ -220,42 +222,69 @@ const AnalysisPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isTypingComplete, setIsTypingComplete] = useState(false);
-  const { result, userQuestion, aiToken, cdrPk } = useAppContext();
+  const { result } = useAppContext();
+
+  const initializeLiff = async () => {
+    // 只在 LIFF 環境中初始化
+    if (!window.liff) {
+      console.log("Not in LIFF environment, skipping LIFF init");
+      return;
+    }
+
+    try {
+      await liff.init({ liffId: "2006502425-NnaLozOm" });
+      console.log("LIFF initialized successfully");
+    } catch (error) {
+      console.error("LIFF init error:", error);
+      // 在 LIFF 環境中，仍然可以顯示錯誤
+      if (window.liff) {
+        alert(`LIFF 初始化錯誤: ${error.message}`);
+      }
+    }
+  };
 
   useEffect(() => {
     const fetchAnalysis = async () => {
-      if (!aiToken || !cdrPk) {
-        setError('無法取得分析資訊，請重新嘗試付款流程。');
-        setIsLoading(false);
-        return;
-      }
+      // if (!aiToken || !cdrPk) {
+      //   setError('無法取得分析資訊，請重新嘗試付款流程。');
+      //   setIsLoading(false);
+      //   return;
+      // }
 
       try {
-        const response = await fetch(`/api/card/api/gacha/explanation/?ai_token=${aiToken}&cdr_pk=${cdrPk}&question=${encodeURIComponent(userQuestion)}`, {
-          method: 'GET',
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-          }
-        });
-
-        if (!response.ok) {
-          throw new Error(`伺服器回應錯誤 (${response.status})`);
-        }
-
-        const data = await response.json();
+        const data = await apiRequestJson('/card/api/gacha/explanation/?ai_token=hIkm8WQ4Vv&cdr_pk=850&stream=false');
         setAnalysis(data.explanation || '暫無分析結果');
         setIsLoading(false);
       } catch (error) {
         console.error('解析擷取錯誤:', error);
-        setError('無法取得分析結果，請稍後再試。');
+        setError(`無法取得分析結果：${error.message}`);
         setIsLoading(false);
       }
     };
 
     fetchAnalysis();
-  }, [aiToken, cdrPk, userQuestion]);
+    initializeLiff();
+  }, []);
 
+  const handleSendToLine = async (text) => {
+    // 檢查是否在 LIFF 環境中
+    if (!window.liff) {
+      console.log("Not in LIFF environment, cannot send message");
+      alert("此功能僅在 LINE 應用程式中可用");
+      return;
+    }
+
+    try {
+      await liff.sendMessages([{ type: "text", text }]);
+      console.log("Message sent successfully to LINE");
+      liff.closeWindow(); // 關閉視窗
+    } catch (error) {
+      console.error("Send message error:", error);
+      alert(`發送訊息失敗: ${error.message}`);
+    }
+  };
+
+  
   return (
     <PageContainer
       initial={{ opacity: 0 }}
@@ -368,7 +397,7 @@ const AnalysisPage = () => {
                 style={{ width: '100%' }}
               >
                 <ImagesContainer>
-                  {result.footer && result.footer.length > 0 ? (
+                  {result.footer && result.footer.length > 0 &&
                     result.footer.map((image, index) => (
                       <ImageItem 
                         key={index}
@@ -392,32 +421,9 @@ const AnalysisPage = () => {
                           rotateX: 10,
                           boxShadow: "0 20px 30px rgba(0, 0, 0, 0.25)" 
                         }}
+                        onClick={() => handleSendToLine(image.push_text)}
                       />
-                    ))
-                  ) : (
-                    // Fallback image if API doesn't return any
-                    <ImageItem 
-                      src="/images/tutor.png" 
-                      alt="Tutor"
-                      initial={{ y: 40, opacity: 0, rotateY: -10, rotateX: 5 }}
-                      animate={{ 
-                        y: 0, 
-                        opacity: 1,
-                        rotateY: 0,
-                        rotateX: 5,
-                        z: 20,
-                        transition: { 
-                          duration: 0.8,
-                          delay: 0.1
-                        }
-                      }}
-                      whileHover={{ 
-                        scale: 1.1, 
-                        y: -5,
-                        rotateX: 10,
-                        boxShadow: "0 20px 30px rgba(0, 0, 0, 0.25)" 
-                      }}
-                    />
+                    )
                   )}
                 </ImagesContainer>
               </motion.div>
