@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { motion } from 'framer-motion';
 import { useAppContext } from '../context/AppContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import CircleSymbol from '../components/symbols/CircleSymbol'
@@ -215,11 +214,7 @@ const ReadingPage = () => {
   const navigate = useNavigate();
   const { 
     userQuestion, 
-    result, 
-    cdrPk, 
-    setCdrPk, 
-    aiToken, 
-    setAiToken 
+    result,
   } = useAppContext();
   const [loading, setLoading] = useState(false);
   const [loadedImages, setLoadedImages] = useState({});
@@ -258,14 +253,15 @@ const ReadingPage = () => {
   };
   
   const handlePayment = async () => {
-    if (!cdrPk) {
+    console.log(result);
+    if (!result.cdr_pk) {
       alert('系統錯誤：無法取得卡片資訊');
       return;
     }
 
     try {
       // Get payment URL
-      const response = await fetch(`/api/card/api/gacha/get_ai_token/?cdr_pk=${cdrPk}&vendor_code=NewebPay`, {
+      const response = await fetch(`/api/card/api/gacha/get_ai_token/?cdr_pk=${result.cdr_pk}&vendor_code=NewebPay`, {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
@@ -275,41 +271,42 @@ const ReadingPage = () => {
 
       if (!response.ok) {
         throw new Error(`Payment initiation failed (${response.status})`);
-      }
-
+      } 
+      
       const data = await response.json();
+      // console.log(data);
       
-      // Open payment URL in new window
-      window.location.href = data.payment_url;
-      
-      // Start polling for payment completion
-      const pollInterval = setInterval(async () => {
-        try {
-          const explanationResponse = await fetch(`/api/card/api/gacha/explanation/?ai_token=${data.ai_token}&cdr_pk=${cdrPk}&question=${encodeURIComponent(userQuestion)}`, {
-            method: 'GET',
-            headers: {
-              'Accept': 'application/json',
-              'Content-Type': 'application/json'
-            }
-          });
-
-          if (explanationResponse.ok) {
-            // Payment successful
-            clearInterval(pollInterval);
-            setAiToken(data.ai_token);
-            setHasToken(true);
-            setShowModal(false);
-            navigate('/analysis');
-          }
-        } catch (error) {
-          console.error('Error checking payment status:', error);
+      // 處理付款頁面
+      if (data.data) {
+        // 嘗試在新視窗中開啟付款頁面
+        const newWindow = window.open('', '_blank', 'width=800,height=600');
+        
+        if (newWindow && !newWindow.closed) {
+          // 成功開啟新視窗
+          newWindow.document.write(data.data.html);
+          newWindow.document.close();
+          setShowModal(false);
+        } else {
+          // 彈出視窗被阻擋，使用當前頁面跳轉
+          // console.log('彈出視窗被阻擋，在當前頁面開啟付款頁面');
+          
+          // 創建臨時的 blob URL
+          const blob = new Blob([data.data], { type: 'text/html' });
+          const url = URL.createObjectURL(blob);
+          
+          // 在當前頁面跳轉到付款頁面
+          window.location.href = url;
+          
+          // 清理 blob URL（延遲清理以確保跳轉完成）
+          setTimeout(() => {
+            URL.revokeObjectURL(url);
+          }, 1000);
         }
-      }, 3000); // Poll every 3 seconds
-
-      // Clear polling after 5 minutes (300000 ms)
-      setTimeout(() => {
-        clearInterval(pollInterval);
-      }, 300000);
+        
+      } else {
+        console.error('API 回應中沒有 data 字段:', data);
+        throw new Error('無法取得付款頁面資訊');
+      }
 
     } catch (error) {
       console.error('Payment error:', error);
