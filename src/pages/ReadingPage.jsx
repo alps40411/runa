@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAppContext } from '../context/AppContext';
 
 const PageContainer = styled(motion.div)`
@@ -108,11 +108,69 @@ const LoadingSymbol = styled(motion.div)`
   border-top-color: transparent;
 `;
 
+// Modal styles
+const ModalOverlay = styled(motion.div)`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  backdrop-filter: blur(3px);
+`;
+
+const ModalContent = styled(motion.div)`
+  background: var(--color-background);
+  padding: var(--spacing-xl);
+  border-radius: 12px;
+  max-width: 320px;
+  width: 90%;
+  text-align: center;
+  position: relative;
+  border: 1px solid rgba(200, 188, 167, 0.3);
+`;
+
+const ModalText = styled.p`
+  color: var(--color-text-primary);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  margin-bottom: var(--spacing-xl);
+`;
+
+const ModalButtonContainer = styled.div`
+  display: flex;
+  gap: var(--spacing-md);
+`;
+
+const ModalButton = styled(motion.button)`
+  flex: 1;
+  padding: var(--spacing-md);
+  border-radius: 6px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  border: none;
+  
+  ${props => props.primary ? `
+    background-color: var(--color-accent);
+    color: white;
+  ` : `
+    background-color: transparent;
+    border: 1px solid var(--color-text-secondary);
+    color: var(--color-text-secondary);
+  `}
+`;
+
 const ReadingPage = () => {
   const navigate = useNavigate();
   const { userQuestion } = useAppContext();
   const [reading, setReading] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [hasToken, setHasToken] = useState(false); // This would be set based on your token validation logic
 
   useEffect(() => {
     const staticData = {
@@ -140,14 +198,23 @@ const ReadingPage = () => {
         }
       ],
       "question": "本月運勢",
-      "ai_token": "hJzupJyRiC"
+      "ai_token": null // Simulating no token
     };
 
     setTimeout(() => {
       setReading(staticData);
+      setHasToken(!!staticData.ai_token);
       setLoading(false);
     }, 1500);
   }, []);
+
+  const handleAnalysisClick = () => {
+    if (hasToken) {
+      navigate('/analysis');
+    } else {
+      setShowModal(true);
+    }
+  };
 
   if (loading) {
     return (
@@ -209,10 +276,50 @@ const ReadingPage = () => {
       <AnalysisButton
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
-        onClick={() => navigate('/analysis')}
+        onClick={handleAnalysisClick}
       >
         深度解析（需等約30秒）
       </AnalysisButton>
+
+      <AnimatePresence>
+        {showModal && (
+          <ModalOverlay
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <ModalContent
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+            >
+              <ModalText>
+                噢噢～目前的 Aiya 幣餘額好像有點不夠耶！是否進行充值，解鎖下一個遊戲任務？
+              </ModalText>
+              <ModalButtonContainer>
+                <ModalButton
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setShowModal(false)}
+                >
+                  我再想想
+                </ModalButton>
+                <ModalButton
+                  primary
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => {
+                    // Handle recharge logic here
+                    setShowModal(false);
+                  }}
+                >
+                  立即充值
+                </ModalButton>
+              </ModalButtonContainer>
+            </ModalContent>
+          </ModalOverlay>
+        )}
+      </AnimatePresence>
     </PageContainer>
   );
 };
