@@ -224,14 +224,8 @@ const AnalysisPage = () => {
 
   useEffect(() => {
     const fetchAnalysis = async () => {
-      if (!aiToken || !cdrPk) {
-        setError('無法取得分析資訊，請重新嘗試付款流程。');
-        setIsLoading(false);
-        return;
-      }
-
       try {
-        const response = await fetch(`/api/card/api/gacha/explanation/?ai_token=${aiToken}&cdr_pk=${cdrPk}&question=${encodeURIComponent(userQuestion)}`, {
+        const response = await fetch(`/api/card/api/gacha/explanation/?ai_token=${aiToken}&cdr_pk=${result.cdr_pk}&question=${encodeURIComponent(result.question)}`, {
           method: 'GET',
           headers: {
             'Accept': 'application/json',
@@ -254,7 +248,7 @@ const AnalysisPage = () => {
     };
 
     fetchAnalysis();
-  }, [aiToken, cdrPk, userQuestion]);
+  }, []);
 
   return (
     <PageContainer

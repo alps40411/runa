@@ -210,10 +210,180 @@ const ModalButton = styled(motion.button)`
   `}
 `;
 
+// 付款 Modal 樣式
+const PaymentModalOverlay = styled(motion.div)`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1001;
+  backdrop-filter: blur(5px);
+`;
+
+const PaymentModalContent = styled(motion.div)`
+  background: white;
+  border-radius: 12px;
+  max-width: 90vw;
+  max-height: 90vh;
+  width: 800px;
+  height: 600px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+`;
+
+const PaymentModalHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid #e5e5e5;
+  background: #f8f9fa;
+  border-radius: 12px 12px 0 0;
+`;
+
+const PaymentModalTitle = styled.h3`
+  margin: 0;
+  color: #333;
+  font-size: 1.1rem;
+  font-weight: 600;
+`;
+
+const CloseButton = styled.button`
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #666;
+  padding: 5px;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  
+  &:hover {
+    background: #e9ecef;
+    color: #333;
+  }
+`;
+
+const PaymentModalBody = styled.div`
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+`;
+
+const PaymentIframe = styled.iframe`
+  width: 100%;
+  height: 100%;
+  border: none;
+`;
+
+// 狀態檢查 Modal 樣式
+const StatusCheckModalOverlay = styled(motion.div)`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1002;
+  backdrop-filter: blur(3px);
+`;
+
+const StatusCheckModalContent = styled(motion.div)`
+  background: var(--color-background);
+  padding: var(--spacing-xl);
+  border-radius: 12px;
+  max-width: 320px;
+  width: 90%;
+  text-align: center;
+  position: relative;
+  border: 1px solid rgba(200, 188, 167, 0.3);
+`;
+
+const StatusContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+`;
+
+const StatusIcon = styled.div`
+  font-size: 3rem;
+  margin-bottom: 15px;
+  
+  ${props => {
+    if (props.status === 'loading') return 'color: #007bff;';
+    if (props.status === 'success') return 'color: #28a745;';
+    if (props.status === 'failed') return 'color: #dc3545;';
+    return 'color: #6c757d;';
+  }}
+`;
+
+const StatusText = styled.h3`
+  margin: 0 0 10px 0;
+  color: var(--color-text-primary);
+  font-size: 1.1rem;
+`;
+
+const StatusDescription = styled.p`
+  margin: 0 0 20px 0;
+  color: var(--color-text-secondary);
+  text-align: center;
+  line-height: 1.5;
+  font-size: 0.9rem;
+`;
+
+const LoadingSpinner = styled.div`
+  width: 30px;
+  height: 30px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #007bff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 15px;
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+`;
+
+const StatusButton = styled.button`
+  background: var(--color-accent);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background 0.2s;
+  
+  &:hover {
+    opacity: 0.9;
+  }
+`;
+
 const ReadingPage = () => {
   const navigate = useNavigate();
   const { 
     userQuestion, 
+   
+    setAiToken,
+
     result,
   } = useAppContext();
   const [loading, setLoading] = useState(false);
@@ -221,6 +391,15 @@ const ReadingPage = () => {
   const [animationComplete, setAnimationComplete] = useState({});
   const [showModal, setShowModal] = useState(false);
   const [hasToken, setHasToken] = useState(false);
+  
+  // 付款相關狀態
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentHtml, setPaymentHtml] = useState('');
+  const [sn, setSn] = useState('');
+  
+  // 狀態檢查相關
+  const [showStatusCheckModal, setShowStatusCheckModal] = useState(false);
+  const [statusCheckState, setStatusCheckState] = useState('idle'); // idle, checking, success, failed
 
   // 預加載圖片
   useEffect(() => {
@@ -252,14 +431,46 @@ const ReadingPage = () => {
     }
   };
   
+  // 檢查付款狀態的 API
+  const checkPaymentStatus = async () => {
+    try {
+      setStatusCheckState('checking');
+      const response = await fetch(`/api/card/api/gacha/get_ai_token/?cdr_pk=${result.cdr_pk}&sn=${sn}`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        setStatusCheckState('failed');
+        throw new Error(`Status check failed (${response.status})`);
+      } else {
+        setStatusCheckState('success');
+      }
+
+      const data = await response.json();
+      setAiToken(data.data.ai_token);
+      return data;
+    } catch (error) {
+      console.error('Payment status check error:', error);
+      setStatusCheckState('failed');
+      return null;
+    }
+  };
+
+  // 主要付款處理函數
   const handlePayment = async () => {
-    console.log(result);
-    if (!result.cdr_pk) {
+    if (!result?.cdr_pk) {
       alert('系統錯誤：無法取得卡片資訊');
       return;
     }
 
     try {
+      setShowPaymentModal(true);
+      setShowModal(false);
+      
       // Get payment URL
       const response = await fetch(`/api/card/api/gacha/get_ai_token/?cdr_pk=${result.cdr_pk}&vendor_code=NewebPay`, {
         method: 'GET',
@@ -274,35 +485,11 @@ const ReadingPage = () => {
       } 
       
       const data = await response.json();
-      // console.log(data);
-      
+      setSn(data.data.sn);
+
       // 處理付款頁面
-      if (data.data) {
-        // 嘗試在新視窗中開啟付款頁面
-        const newWindow = window.open('', '_blank', 'width=800,height=600');
-        
-        if (newWindow && !newWindow.closed) {
-          // 成功開啟新視窗
-          newWindow.document.write(data.data.html);
-          newWindow.document.close();
-          setShowModal(false);
-        } else {
-          // 彈出視窗被阻擋，使用當前頁面跳轉
-          // console.log('彈出視窗被阻擋，在當前頁面開啟付款頁面');
-          
-          // 創建臨時的 blob URL
-          const blob = new Blob([data.data], { type: 'text/html' });
-          const url = URL.createObjectURL(blob);
-          
-          // 在當前頁面跳轉到付款頁面
-          window.location.href = url;
-          
-          // 清理 blob URL（延遲清理以確保跳轉完成）
-          setTimeout(() => {
-            URL.revokeObjectURL(url);
-          }, 1000);
-        }
-        
+      if (data.data && data.data.html) {
+        setPaymentHtml(data.data.html);
       } else {
         console.error('API 回應中沒有 data 字段:', data);
         throw new Error('無法取得付款頁面資訊');
@@ -311,6 +498,87 @@ const ReadingPage = () => {
     } catch (error) {
       console.error('Payment error:', error);
       alert('付款過程發生錯誤，請稍後再試。');
+      setShowPaymentModal(false);
+    }
+  };
+
+  // 關閉付款 modal 並開始狀態檢查
+  const handleClosePaymentModal = () => {
+    setShowPaymentModal(false);
+    
+    // 如果有 sn，表示已經發起付款，需要檢查狀態
+    if (sn) {
+      setShowStatusCheckModal(true);
+      setStatusCheckState('checking'); // 立即設置為檢查中狀態
+      checkPaymentStatus();
+    }
+    
+    // 重置付款相關狀態
+    setPaymentHtml('');
+  };
+
+  // 關閉狀態檢查 modal
+  const handleCloseStatusCheckModal = () => {
+    setShowStatusCheckModal(false);
+    setStatusCheckState('idle');
+  };
+
+  // 重新檢查狀態
+  const handleRetryStatusCheck = () => {
+    setStatusCheckState('idle');
+    handleCloseStatusCheckModal();
+  };
+
+  // 狀態檢查 Modal 內容
+  const getStatusCheckContent = () => {
+    switch (statusCheckState) {
+      case 'checking':
+        return (
+          <StatusContainer>
+            <LoadingSpinner />
+            <StatusText>正在檢查付款狀態...</StatusText>
+            <StatusDescription>
+              請稍候，正在確認您的付款結果
+            </StatusDescription>
+          </StatusContainer>
+        );
+      
+      case 'success':
+        return (
+          <StatusContainer>
+            <StatusIcon status="success">✓</StatusIcon>
+            <StatusText>付款成功！</StatusText>
+            <StatusDescription>
+              恭喜您完成付款，正在為您開啟深度解析功能...
+            </StatusDescription>
+            <StatusButton 
+              onClick={() => {
+                
+                navigate('/analysis');
+              }}
+              style={{ marginTop: '10px' }}
+            >
+              前往深度解析
+            </StatusButton>
+          </StatusContainer>
+        );
+      
+      case 'failed':
+        return (
+          <StatusContainer>
+            <StatusIcon status="failed">✗</StatusIcon>
+            <StatusText>未檢測到付款</StatusText>
+            <StatusDescription>
+              如果您已完成付款，請稍後再檢查，或聯繫客服協助處理
+            </StatusDescription>
+            <StatusButton onClick={handleRetryStatusCheck}>
+              重新檢查
+            </StatusButton>
+          </StatusContainer>
+        );
+      
+      default:
+        return null;
     }
   };
   
@@ -422,6 +690,8 @@ const ReadingPage = () => {
       >
         深度解析
       </AnalysisButton>
+
+      {/* 原有的充值確認 Modal */}
       <AnimatePresence>
         {showModal && (
           <ModalOverlay
@@ -456,6 +726,59 @@ const ReadingPage = () => {
               </ModalButtonContainer>
             </ModalContent>
           </ModalOverlay>
+        )}
+      </AnimatePresence>
+
+      {/* 付款 Modal */}
+      <AnimatePresence>
+        {showPaymentModal && (
+          <PaymentModalOverlay
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <PaymentModalContent
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+            >
+              <PaymentModalHeader>
+                <PaymentModalTitle>付款頁面</PaymentModalTitle>
+                <CloseButton onClick={handleClosePaymentModal}>
+                  ×
+                </CloseButton>
+              </PaymentModalHeader>
+              
+              <PaymentModalBody>
+                {paymentHtml && (
+                  <PaymentIframe
+                    srcDoc={paymentHtml}
+                    title="付款頁面"
+                    sandbox="allow-forms allow-scripts allow-same-origin allow-top-navigation allow-popups"
+                  />
+                )}
+              </PaymentModalBody>
+            </PaymentModalContent>
+          </PaymentModalOverlay>
+        )}
+      </AnimatePresence>
+
+      {/* 狀態檢查 Modal */}
+      <AnimatePresence>
+        {showStatusCheckModal && (
+          <StatusCheckModalOverlay
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <StatusCheckModalContent
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+            >
+              {getStatusCheckContent()}
+            </StatusCheckModalContent>
+          </StatusCheckModalOverlay>
         )}
       </AnimatePresence>
     </PageContainer>
