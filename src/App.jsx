@@ -7,6 +7,8 @@ import ReadingPage from './pages/ReadingPage'
 import AnalysisPage from './pages/AnalysisPage'
 import { AppProvider } from './context/AppContext'
 import LoadingScreen from './components/LoadingScreen'
+import LiffDebugger from './components/LiffDebugger'
+import { initLiff } from './utils/liff'
 
 // This component wraps our routes with AnimatePresence
 const AnimatedRoutes = () => {
@@ -30,6 +32,19 @@ function App() {
   const [welcomeReady, setWelcomeReady] = useState(false)
 
   useEffect(() => {
+    const initializeApp = async () => {
+      try {
+        // 請將 'YOUR_LIFF_ID' 替換為您實際的 LIFF ID
+        const liffId = '2006502425-NnaLozOm';
+        await initLiff(liffId);
+      } catch (error) {
+        console.error('應用程式初始化失敗:', error);
+      }
+    };
+
+    initializeApp();
+
+    
     // 預先加載歡迎頁面
     setTimeout(() => {
       setWelcomeReady(true)
@@ -78,6 +93,7 @@ function App() {
           </div>
         )}
       </div>
+      {/* <LiffDebugger /> */}
     </AppProvider>
   )
 }

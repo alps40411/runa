@@ -6,27 +6,29 @@ import { motion, AnimatePresence } from 'framer-motion';
 import CircleSymbol from '../components/symbols/CircleSymbol'
 
 const PageContainer = styled(motion.div)`
-  min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
-  background-color: var(--color-background);
-  padding: var(--spacing-xl) var(--spacing-md);
+  justify-content: center;
+  height: 100vh;
+  text-align: center;
   position: relative;
+  overflow: hidden;
   width: 100%;
   background-image: url('/images/stone_bg.png');
-  background-size: contain;
+  background-size: 100% auto;
   background-position: center;
-  padding: 40px 20px;
+  padding: 0px 15px;
   box-sizing: border-box;
   background-color: #f8f8f5;
+  will-change: opacity, transform;
 `;
 
 const CardsContainer = styled.div`
   display: flex;
   flex-direction: column;
   gap: var(--spacing-md);
-  margin-top: 80px;
+  margin-top: 40px;
   margin-bottom: var(--spacing-xl);
   width: 100%;
   max-width: 340px;
@@ -381,9 +383,6 @@ const ReadingPage = () => {
   const navigate = useNavigate();
   const { 
     userQuestion, 
-   
-    setAiToken,
-
     result,
   } = useAppContext();
   const [loading, setLoading] = useState(false);
@@ -427,7 +426,8 @@ const ReadingPage = () => {
     if (hasToken) {
       navigate('/analysis');
     } else {
-      setShowModal(true);
+      // setShowModal(true);
+      navigate('/analysis');
     }
   };
   
@@ -451,7 +451,6 @@ const ReadingPage = () => {
       }
 
       const data = await response.json();
-      setAiToken(data.data.ai_token);
       return data;
     } catch (error) {
       console.error('Payment status check error:', error);

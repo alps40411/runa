@@ -5,24 +5,25 @@ import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import CircleSymbol from '../components/symbols/CircleSymbol'
+import { sendMessageToChat, checkLiffStatus } from '../utils/liff'
 
 const PageContainer = styled(motion.div)`
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  min-height: 100vh;
-  padding: var(--spacing-xl) var(--spacing-md);
+  height: 100vh;
   text-align: center;
   position: relative;
   overflow: hidden;
   width: 100%;
-  background-size: contain;
+  background-image: url('/images/stone_bg.png');
+  background-size: 100% auto;
   background-position: center;
-  background-repeat: no-repeat;
-  padding: 40px 20px;
+  padding: 20px 15px;
   box-sizing: border-box;
   background-color: #f8f8f5;
+  will-change: opacity, transform;
 `;
 
 const BackButton = styled(motion.button)`
@@ -46,8 +47,8 @@ const BackButton = styled(motion.button)`
 const Title = styled(motion.h1)`
   font-weight: var(--font-weight-medium);
   font-size: 1.2rem;
-  margin-top: var(--spacing-xl);
-  margin-bottom: var(--spacing-xl);
+  margin-top: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
   color: var(--color-text-primary);
 `;
 
@@ -62,6 +63,23 @@ const AnalysisContainer = styled(motion.div)`
   margin-bottom: var(--spacing-xl);
   position: relative;
   text-align: left;
+  max-height: calc(100vh - 300px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: rgba(200, 188, 167, 0.3);
+    border-radius: 2px;
+  }
   
   &:before {
     content: "";
@@ -79,13 +97,13 @@ const AnalysisContainer = styled(motion.div)`
   }
 `;
 
-const AnalysisText = styled.p`
-  font-weight: var(--font-weight-light);
-  line-height: 1.8;
+const AnalysisText = styled.div`
   font-size: 0.95rem;
-  letter-spacing: 0.5px;
+  line-height: 1.8;
   color: var(--color-text-primary);
   white-space: pre-wrap;
+  word-break: break-word;
+  letter-spacing: 0.5px;
 `;
 
 const ErrorText = styled(motion.div)`
@@ -124,6 +142,7 @@ const ImageItem = styled(motion.img)`
   box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.4);
   transform-style: preserve-3d;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
   
   &:hover {
     transform: translateY(-5px) scale(1.05);
@@ -179,7 +198,7 @@ const TypewriterText = ({ htmlContent, delay = 70, onComplete }) => {
     if (positionRef.current >= htmlWithoutTagsRef.current.length) {
       setIsComplete(true);
       if (onComplete) onComplete();
-      return;
+      return;l
     }
     
     const timer = setTimeout(() => {
@@ -220,12 +239,21 @@ const AnalysisPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isTypingComplete, setIsTypingComplete] = useState(false);
-  const { result, userQuestion, aiToken, cdrPk } = useAppContext();
+  const { result } = useAppContext();
+
+  const handleImageClick = async (pushText) => {
+    try {
+      const { sendMessageToChat } = await import('../utils/liff');
+      await sendMessageToChat(pushText);
+    } catch (error) {
+      console.error('測試訊息發送失敗:', error);
+    }
+  };
 
   useEffect(() => {
     const fetchAnalysis = async () => {
       try {
-        const response = await fetch(`/api/card/api/gacha/explanation/?ai_token=${aiToken}&cdr_pk=${result.cdr_pk}&question=${encodeURIComponent(result.question)}`, {
+        const response = await fetch(`/api/card/api/gacha/explanation/?ai_token=${result.ai_token}&cdr_pk=${result.cdr_pk}&question=${encodeURIComponent(result.question)}`, {
           method: 'GET',
           headers: {
             'Accept': 'application/json',
@@ -368,6 +396,7 @@ const AnalysisPage = () => {
                         key={index}
                         src={image.image} 
                         alt={image.push_text || 'Image'}
+                        onClick={() => handleImageClick(image.push_text)}
                         initial={{ y: 40, opacity: 0, rotateY: -10, rotateX: 5 }}
                         animate={{ 
                           y: 0, 
@@ -386,6 +415,7 @@ const AnalysisPage = () => {
                           rotateX: 10,
                           boxShadow: "0 20px 30px rgba(0, 0, 0, 0.25)" 
                         }}
+                        whileTap={{ scale: 0.95 }}
                       />
                     ))
                   ) : (
@@ -393,6 +423,7 @@ const AnalysisPage = () => {
                     <ImageItem 
                       src="/images/tutor.png" 
                       alt="Tutor"
+                      onClick={() => handleImageClick('深度解析結果')}
                       initial={{ y: 40, opacity: 0, rotateY: -10, rotateX: 5 }}
                       animate={{ 
                         y: 0, 
@@ -411,6 +442,7 @@ const AnalysisPage = () => {
                         rotateX: 10,
                         boxShadow: "0 20px 30px rgba(0, 0, 0, 0.25)" 
                       }}
+                      whileTap={{ scale: 0.95 }}
                     />
                   )}
                 </ImagesContainer>

@@ -3,14 +3,13 @@ import { useNavigate } from 'react-router-dom'
 import styled from 'styled-components'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAppContext } from '../context/AppContext'
-import CircleSymbol from '../components/symbols/CircleSymbol'
 
 const PageContainer = styled(motion.div)`
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 100vh;
+  height: 100vh;
   text-align: center;
   position: relative;
   overflow: hidden;
@@ -18,27 +17,25 @@ const PageContainer = styled(motion.div)`
   background-image: url('/images/stone_bg.png');
   background-size: 100% auto;
   background-position: center;
-  /* background-repeat: no-repeat; */
-  padding: 40px 20px;
+  padding: 0px 15px;
   box-sizing: border-box;
   background-color: #f8f8f5;
   will-change: opacity, transform;
 `
 
 const LogoContainer = styled(motion.div)`
-  margin-bottom: var(--spacing-xl);
+  margin-bottom: var(--spacing-lg);
 `
 
 const LogoImage = styled.img`
-  width: 50%;
-  height: auto;
+  width: 60%;
 `
 
 const Title = styled(motion.h1)`
   font-weight: var(--font-weight-medium);
   font-size: 1.2rem;
   line-height: 1.6;
-  margin-bottom: var(--spacing-lg);
+  margin-bottom: var(--spacing-md);
   letter-spacing: 1px;
   color: #5b5c5b;
 `
@@ -48,7 +45,7 @@ const Description = styled(motion.p)`
   font-size: 0.9rem;
   line-height: 1.8;
   margin-bottom: var(--spacing-xl);
-  max-width: 280px;
+  max-width: 260px;
   letter-spacing: 0.5px;
   color: #606160;
 `
@@ -62,7 +59,7 @@ const SectionTitle = styled(motion.h2)`
 `
 
 const InputContainer = styled(motion.div)`
-  width: 130%;
+  width: 100%;
   margin-bottom: var(--spacing-lg);
   margin-top: 5px;
 `
@@ -118,28 +115,6 @@ const SubmitButton = styled(motion.button)`
   }
 `
 
-const SymbolsContainer = styled.div`
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: -1;
-`
-
-const TopRightSymbol = styled.div`
-  position: absolute;
-  top: 40px;
-  right: 30px;
-  opacity: 0.6;
-`
-
-const BottomLeftSymbol = styled.div`
-  position: absolute;
-  bottom: 80px;
-  left: 30px;
-  opacity: 0.6;
-`
-
 const WelcomePage = () => {
   const navigate = useNavigate()
   const { userQuestion, setUserQuestion } = useAppContext()
@@ -167,7 +142,6 @@ const WelcomePage = () => {
     
     // Delay navigation to allow exit animation to complete
     setTimeout(() => {
-      setIsSubmitting(false)
       navigate('/stone-selection')
     }, 800)
   }

@@ -10,20 +10,22 @@ import 'swiper/css';
 import 'swiper/css/effect-coverflow';
 
 const PageContainer = styled(motion.div)`
-  min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  height: 100vh;
+  text-align: center;
   position: relative;
   overflow: hidden;
   width: 100%;
   background-image: url('/images/stone_bg.png');
   background-size: 100% auto;
   background-position: center;
-  padding: 40px 20px;
+  padding: 0px 15px;
   box-sizing: border-box;
   background-color: #f8f8f5;
+  will-change: opacity, transform;
 `;
 
 const Title = styled.h1`
@@ -38,7 +40,8 @@ const Title = styled.h1`
 const SelectedStonesContainer = styled.div`
   display: flex;
   justify-content: center;
-  margin-bottom: var(--spacing-lg);
+  margin-bottom: var(--spacing-md);
+  margin-top: -80px;
 `;
 
 const StoneSlot = styled(motion.div)`
@@ -48,7 +51,6 @@ const StoneSlot = styled(motion.div)`
   background-color: white;
   background-size: cover;
   background-position: center;
-  margin-top: 20px;
   position: relative;
 `;
 
@@ -156,7 +158,7 @@ const SectionTitle = styled(motion.h2)`
 `
 
 const InputContainer = styled(motion.div)`
-  width: 130%;
+  width: 100%;
   margin-bottom: var(--spacing-lg);
   margin-top: 5px;
 `
