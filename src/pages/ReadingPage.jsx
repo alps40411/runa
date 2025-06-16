@@ -435,7 +435,7 @@ const ReadingPage = () => {
   const checkPaymentStatus = async () => {
     try {
       setStatusCheckState('checking');
-      const response = await fetch(`/api/card/api/gacha/get_ai_token/?cdr_pk=${result.cdr_pk}&sn=${sn}`, {
+      const response = await fetch(`/get_ai_token/?cdr_pk=${result.cdr_pk}&sn=${sn}`, {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
@@ -471,7 +471,7 @@ const ReadingPage = () => {
       setShowModal(false);
       
       // Get payment URL
-      const response = await fetch(`/api/card/api/gacha/get_ai_token/?cdr_pk=${result.cdr_pk}&vendor_code=NewebPay`, {
+      const response = await fetch(`/get_ai_token/?cdr_pk=${result.cdr_pk}&vendor_code=NewebPay`, {
         method: 'GET',
         headers: {
           'Accept': 'application/json',

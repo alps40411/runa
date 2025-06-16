@@ -7,10 +7,8 @@ export const useAppContext = () => useContext(AppContext)
 export const AppProvider = ({ children }) => {
   const [userName, setUserName] = useState('')
   const [userQuestion, setUserQuestion] = useState('')
-  const [readingResult, setReadingResult] = useState(null)
-  const [isLiffReady, setIsLiffReady] = useState(false)
   const [result, setResult] = useState(null)
-
+  const [runes, setRunes] = useState([])
   
   // This would contain the logic to interact with an API
   // to generate spiritual readings based on user input
@@ -23,7 +21,6 @@ export const AppProvider = ({ children }) => {
       advice: '保持開放的心靈，傾聽內在的聲音。符文的智慧將在你最需要的時刻顯現。'
     }
     
-    setReadingResult(simulatedReading)
     return simulatedReading
   }
 
@@ -32,13 +29,11 @@ export const AppProvider = ({ children }) => {
     setUserName,
     userQuestion,
     setUserQuestion,
-    readingResult,
-    setReadingResult,
     generateReading,
-    isLiffReady,
-    setIsLiffReady,
     result,
     setResult,
+    runes,
+    setRunes,
   }
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>

@@ -262,59 +262,58 @@ const LoadingText = styled(motion.p)`
 
 const StoneSelectionPage = () => {
   const navigate = useNavigate();
-  const { userQuestion, setUserQuestion, result, setResult } = useAppContext();
+  const { userQuestion, runes } = useAppContext();
   const [selectedStones, setSelectedStones] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeIndex, setActiveIndex] = useState(12);
   const [loading, setLoading] = useState(false);
-  const [runes, setRunes] = useState([]);
   
   const stones = Array.from({ length: 25 }, (_, index) => ({
     id: index + 1,
     image: `/images/stone${(index % 5) + 1}.png`
   }));
 
-  useEffect(() => {
-    let isMounted = true;
+  // useEffect(() => {
+  //   let isMounted = true;
     
-    const fetchData = async () => {
-      try {
-        const response = await fetch('api/card/api/gacha/result/?token=test', {
-          method: 'GET',
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-          }
-        });
+  //   const fetchData = async () => {
+  //     try {
+  //       const response = await fetch('api/result/?token=test', {
+  //         method: 'GET',
+  //         headers: {
+  //           'Accept': 'application/json',
+  //           'Content-Type': 'application/json'
+  //         }
+  //       });
 
-        if (!response.ok) {
-          throw new Error(`伺服器回應錯誤 (${response.status})`);
-        }
+  //       if (!response.ok) {
+  //         throw new Error(`伺服器回應錯誤 (${response.status})`);
+  //       }
 
-        const data = await response.json();
+  //       const data = await response.json();
         
-        if (isMounted) {
-          setResult(data);
-          // Extract all image_s values from data.card and set them at once
-          if (data.card && Array.isArray(data.card)) {
-            const runeImages = data.card.map(item => item.image_s);
-            setRunes(runeImages);
-          }
+  //       if (isMounted) {
+  //         setResult(data);
+  //         // Extract all image_s values from data.card and set them at once
+  //         if (data.card && Array.isArray(data.card)) {
+  //           const runeImages = data.card.map(item => item.image_s);
+  //           setRunes(runeImages);
+  //         }
           
-          // console.log("data: ", data);
-        }
-      } catch (error) {
-        console.error('解析擷取錯誤:', error);
-      }
-    };
+  //         // console.log("data: ", data);
+  //       }
+  //     } catch (error) {
+  //       console.error('解析擷取錯誤:', error);
+  //     }
+  //   };
     
-    fetchData();
+  //   fetchData();
     
-    // Cleanup function to prevent state updates if component unmounts
-    return () => {
-      isMounted = false;
-    };
-  }, []); // Empty dependency array means this runs once on mount
+  //   // Cleanup function to prevent state updates if component unmounts
+  //   return () => {
+  //     isMounted = false;
+  //   };
+  // }, []); // Empty dependency array means this runs once on mount
 
   const handleStoneClick = (stoneId) => {
     if (selectedStones.includes(stoneId)) {

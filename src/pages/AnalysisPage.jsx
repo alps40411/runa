@@ -5,7 +5,7 @@ import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import CircleSymbol from '../components/symbols/CircleSymbol'
-import { sendMessageToChat, checkLiffStatus } from '../utils/liff'
+import { sendMessageToChat } from '../utils/liff'
 
 const PageContainer = styled(motion.div)`
   display: flex;
@@ -198,7 +198,7 @@ const TypewriterText = ({ htmlContent, delay = 70, onComplete }) => {
     if (positionRef.current >= htmlWithoutTagsRef.current.length) {
       setIsComplete(true);
       if (onComplete) onComplete();
-      return;l
+      return;
     }
     
     const timer = setTimeout(() => {
@@ -243,7 +243,6 @@ const AnalysisPage = () => {
 
   const handleImageClick = async (pushText) => {
     try {
-      const { sendMessageToChat } = await import('../utils/liff');
       await sendMessageToChat(pushText);
     } catch (error) {
       console.error('測試訊息發送失敗:', error);
@@ -253,7 +252,7 @@ const AnalysisPage = () => {
   useEffect(() => {
     const fetchAnalysis = async () => {
       try {
-        const response = await fetch(`/api/card/api/gacha/explanation/?ai_token=${result.ai_token}&cdr_pk=${result.cdr_pk}&question=${encodeURIComponent(result.question)}`, {
+        const response = await fetch(`/api/explanation/?ai_token=${result.ai_token}&cdr_pk=${result.cdr_pk}&question=${encodeURIComponent(result.question)}`, {
           method: 'GET',
           headers: {
             'Accept': 'application/json',
