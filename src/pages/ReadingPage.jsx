@@ -426,8 +426,7 @@ const ReadingPage = () => {
     if (hasToken) {
       navigate('/analysis');
     } else {
-      // setShowModal(true);
-      navigate('/analysis');
+      setShowModal(true);
     }
   };
   
