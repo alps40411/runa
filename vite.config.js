@@ -5,10 +5,10 @@ export default defineConfig({
   plugins: [react()],
   server: {
     // For Development
-    allowedHosts: [
-      "bb75-2407-4d00-2c05-7ef7-c13b-75e6-dea5-1878.ngrok-free.app",
-      ".ngrok-free.app"
-    ],
+    // allowedHosts: [
+    //   "bb75-2407-4d00-2c05-7ef7-c13b-75e6-dea5-1878.ngrok-free.app",
+    //   ".ngrok-free.app"
+    // ],
     proxy: {
       "/api": {
         target: "https://ffsystem.ngrok.io/card/api/gacha",
